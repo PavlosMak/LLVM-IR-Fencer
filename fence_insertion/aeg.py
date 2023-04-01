@@ -1,4 +1,5 @@
 from enum import Enum
+from collections import defaultdict
 
 
 class AbstractEvent:
@@ -6,18 +7,18 @@ class AbstractEvent:
         READ = 0
         WRITE = 1
 
-    # TODO: This might be an overkill but not sure, how much detail we need yet.
+    # This might be an overkill but not sure
+    # how much detail we need.
     class MemoryLoc:
         def __init__(self, address: int):
             self.address = address
 
     def __init__(self, program_point: int, direction: MemAccessDirection, mem_loc: MemoryLoc):
         """
-
-        :param id:
-        :param program_point:
-        :param direction:
-        :param mem_loc:
+        Creates a new AbstractEvent
+        :param program_point: The program point (line number event occurs in)
+        :param direction: The direction of accessing the memory (reading or writing)
+        :param mem_loc: The memory location being accessed
         """
         self.program_point = program_point
         self.direction = direction
@@ -32,6 +33,7 @@ class AbstractEventGraphNode:
     def __hash__(self):
         return self.id
 
+
 class AbstractEventGraph:
 
     def __init__(self):
@@ -40,9 +42,8 @@ class AbstractEventGraph:
         self.cycles = list()
         self.vertexCount = 0
 
-    # TODO: Add event in the graph
     def record_event(self, abstract_event: AbstractEvent):
-        node = AbstractEventGraph.AbstractEventGraphNode(abstract_event, self.vertexCount)
+        node = AbstractEventGraphNode(abstract_event, self.vertexCount)
         self.add_node(node)
 
     def add_node(self, node: AbstractEventGraphNode):
@@ -56,8 +57,8 @@ class AbstractEventGraph:
 
     def tarjan_helper(self, u, low, disc, st):
         # Initialize discovery time and low value
-        disc[u] = self.time
-        low[u] = self.time
+        disc.update({u: self.time})
+        low.update({u: self.time})
         self.time += 1
         st.append(u)
 
@@ -87,8 +88,11 @@ class AbstractEventGraph:
         self.cycles = []
         self.time = 0
 
-        disc = [-1] * self.vertexCount
-        low = [-1] * self.vertexCount
+        def default_value():
+            return -1
+
+        disc = defaultdict(default_value)
+        low = defaultdict(default_value)
         st = []
 
         for v in self.edges.keys():

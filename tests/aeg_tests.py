@@ -4,7 +4,7 @@ from fence_insertion.aeg import AbstractEventGraphNode
 from fence_insertion.aeg import AbstractEvent
 
 
-class AbstracyEventGraphTests(unittest.TestCase):
+class AbstractEventGraphTests(unittest.TestCase):
     def test_tarjan(self):
         dummy_event = AbstractEvent(0, AbstractEvent.MemAccessDirection.READ, AbstractEvent.MemoryLoc(0))
         aeg = AbstractEventGraph()
@@ -29,8 +29,9 @@ class AbstracyEventGraphTests(unittest.TestCase):
         aeg.add_edge(node6, node0)
         aeg.add_edge(node6, node2)
 
-        print(aeg.tarjan())
-        # self.assertEqual([[5, 4], [3, 2], [6, 1, 0]], aeg.tarjan())
+        actual_ids = [[node.id for node in cycle] for cycle in aeg.tarjan()]
+        expected_ids = [[5, 4], [3, 2], [6, 1, 0]]
+        self.assertEqual(expected_ids, actual_ids)
 
 
 if __name__ == '__main__':

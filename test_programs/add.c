@@ -5,7 +5,7 @@ int add(int a) {
 }
 
 int main() {
-    add(13);
+    add(add(13));
     int b = add(12);
     return b;
 }

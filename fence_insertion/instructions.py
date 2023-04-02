@@ -23,6 +23,7 @@ class Line:
 
 
 class Instruction:
+    #TODO: Change program_point to be a Line instead of just a number
     def __init__(self, program_point: int):
         """
         Creates a new instruction object
@@ -44,7 +45,7 @@ class Assignment(Instruction):
         super().__init__(program_point)
         split = instr.split(" = ")
         self.lhs = split[0].replace(" ", "")
-        self.rhs = split[1].strip()
+        self.rhs = split[1].strip() #TODO: Instruction
 
     def evts(self) -> set:
         pass

@@ -82,7 +82,7 @@ class AbstractEventGraph:
     def tarjan(self) -> list:
         """
         Performs Tarjan's (1973) algorithm for cycle detection
-        :return: A set of list, each list represents a cycle (i.e. contains the nodes that comprise the cycle)
+        :return: A list of lists, each list represents a cycle (i.e. contains the nodes that comprise the cycle)
         """
         # Reset state
         self.cycles = []

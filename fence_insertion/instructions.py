@@ -47,7 +47,8 @@ class Assignment(Instruction):
         self.lhs = split[0].replace(" ", "")
         self.rhs = split[1].strip() #TODO: Instruction
         split_rhs = self.rhs.split(" ")
-        if split_rhs[0] == "call": #fucntion call
+        if split_rhs[0] == "call": #function call
+            print("found function")
             FunctionCall(self.rhs, program_point)
         
 
@@ -67,12 +68,11 @@ class FunctionCall(Instruction):
         super().__init__(program_point)
         split = instr.split("@")
         function_call = split[1] #full function call
-        split_function_call = function_call.split("(")
-        self.function_call_name = split_function_call[0]
-        function_call_params = split_function_call[1]
-        function_call_params
+        
+        param = function_call.split("(")
+        self.function_name = param[0] #contains the function call 
 
-
+        
         
 
 class Guard(Instruction):

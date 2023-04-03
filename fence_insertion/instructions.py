@@ -48,9 +48,8 @@ class Assignment(Instruction):
         self.rhs = split[1].strip() #TODO: Instruction
         split_rhs = self.rhs.split(" ")
         if split_rhs[0] == "call": #function call
-            print("found function")
-            FunctionCall(self.rhs, program_point)
-        
+            self.functionCall = FunctionCall(self.rhs, program_point)
+
 
     def evts(self) -> set:
         pass

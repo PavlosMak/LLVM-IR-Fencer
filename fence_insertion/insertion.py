@@ -2,7 +2,7 @@ import llvmlite.binding as llvm
 
 from fence_insertion.aeg import AbstractEventGraph
 from fence_insertion.instructions import Line
-
+from fence_insertion.pointer_analysis import SVF
 
 class FenceInserter:
     def __init__(self, path_to_file: str, parse_as_bitcode=False):
@@ -40,5 +40,6 @@ class FenceInserter:
         # TODO call Instruction.create_instruction
         pass
 
+
     def insert_fences(self):
-        pass
+        print(self.ir_txt)

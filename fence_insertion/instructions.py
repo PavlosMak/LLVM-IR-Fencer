@@ -39,13 +39,17 @@ class Assignment(Instruction):
 
     def __init__(self, instr: str, program_point: int):
         """
-        Creates a new assingment instruction
+        Creates a new assignment instruction
         :param instr: The textual representation of the instruction.
         """
         super().__init__(program_point)
         split = instr.split(" = ")
         self.lhs = split[0].replace(" ", "")
         self.rhs = split[1].strip() #TODO: Instruction
+        split_rhs = self.rhs.split(" ")
+        if split_rhs[0] == "call": #fucntion call
+            FunctionCall(self.rhs, program_point)
+        
 
     def evts(self) -> set:
         pass
@@ -55,8 +59,21 @@ class Assignment(Instruction):
 
 
 class FunctionCall(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new assignment instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
+        split = instr.split("@")
+        function_call = split[1] #full function call
+        split_function_call = function_call.split("(")
+        self.function_call_name = split_function_call[0]
+        function_call_params = split_function_call[1]
+        function_call_params
 
+
+        
 
 class Guard(Instruction):
     pass

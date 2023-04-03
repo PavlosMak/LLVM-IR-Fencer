@@ -1,0 +1,34 @@
+X86 Szymanski
+""
+
+{}
+
+P0               | P1              ;
+while1:          | while1:         ;
+MOV [flag1], $1  | MOV [flag2], $1 ;
+waitbar1:        | waitbar1:       ;
+CMP [flag2], $3  | CMP [flag1], $3 ;
+JE  waitbar1     | JE  waitbar1    ;
+MOV [flag1], $3  | MOV [flag2], $3 ;
+CMP [flag2], $1  | CMP [flag1], $1 ;
+JNE notif1       | JNE notif1      ;
+MOV [flag1], $2  | MOV [flag2], $2 ;
+waitbar2:        | waitbar2:       ;
+CMP [flag2], $4  | CMP [flag1], $4 ;
+JNE waitbar2     | JNE waitbar2    ;
+notif1:          | notif1:         ;
+MOV [flag1], $4  | MOV [flag2], $4 ;
+waitbar3:        | waitbar3:       ;
+CMP [flag2], $2  | CMP [flag1], $2 ;
+JE  waitbar3     | JE waitbar3     ;
+MOV [x], $0      | MOV [x], $1     ;
+MOV EAX, [x]     | MOV EAX, [x]    ;
+waitbar4:        | waitbar4:       ;
+CMP [flag2], $2  | CMP [flag1], $2 ;
+JE waitbar4      | JE waitbar4     ;
+CMP [flag2], $3  | CMP [flag1], $3 ;
+JE waitbar4      | JE waitbar4     ;
+MOV [flag1], $0  | MOV [flag1], $0 ;
+JMP while1       | JMP while1      ;
+
+exists (0:EAX=1 \/ 1:EAX=0)

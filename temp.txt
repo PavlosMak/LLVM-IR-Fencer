@@ -1,0 +1,265 @@
+
+*********CallGraph Stats***************
+################ (program : )###############
+-------------------------------------------------------
+CalRetPairInCycle   1
+MaxNodeInCycle      1
+NodeInCycle         1
+TotalEdge           4
+TotalCycle          1
+TotalNode           3
+#######################################################
+
+*********General Stats***************
+################ (program : )###############
+AddrsNum            13
+TotalFieldObjects   0
+StoresNum           7
+FSObjNum            10
+BitCastNumber       0
+FIObjNum            0
+GepsNum             0
+MaxStructSize       0
+IndCallSites        0
+TotalPAGEdges       100
+TotalPointers       43
+BBWith3Succ         0
+ReturnsNum          4
+VarArrayObj         0
+CopysNum            4
+ConstArrayObj       0
+CallsNum            4
+TotalPTAPAGEdges    10
+TotalObjects        11
+FunctionObjs        3
+GlobalObjs          1
+HeapObjs            1
+StackObjs           5
+ConstStructObj      0
+VarStructObj        0
+NonPtrObj           9
+TotalCallSite       4
+LocalVarInRecur     2
+LoadsNum            7
+BBWith2Succ         1
+-------------------------------------------------------
+#######################################################
+
+*********Constraint Graph Stats***************
+################ (program : )###############
+-------------------------------------------------------
+AvgIn/OutEdge       0.5
+AvgIn/OutAddrEdge   0.45
+AvgIn/OutLoadEdge   0
+AvgIn/OutCopyEdge   0.05
+MaxInAddrEdge       1
+MaxOutStoreEdge     0
+NumOfCGNode         59
+TotalValidNode      20
+AvgIn/OutStoreEdge  0
+TotalValidObjNode   9
+NumOfGeps           0
+NumOfCGEdge         1
+NumOfAddrs          9
+MaxOutAddrEdge      1
+NumOfLoads          0
+NumOfStores         0
+MaxOutLoadEdge      0
+NumOfCopys          1
+MaxOutCopyEdge      1
+MaxInStoreEdge      0
+MaxInLoadEdge       0
+MaxInCopyEdge       1
+#######################################################
+
+*********Andersen Pointer Analysis Stats***************
+################ (program : )###############
+-------------------------------------------------------
+AvgTopLvlPtsSize    1
+AvgPtsSetSize       0.152542
+LoadStoreTime       0
+CollapseTime        0
+UpdateCGTime        0
+CopyGepTime         0
+SCCMergeTime        0
+SCCDetectTime       0
+TotalTime           0
+MaxNodesInSCC       0
+PointsToConstPtr    0
+TotalPWCCycleNum    0
+PointsToBlkPtr      0
+TotalCycleNum       0
+IndEdgeSolved       0
+Iterations          1
+NodesInCycles       0
+MaxPtsSetSize       1
+NumOfSCCDetect      1
+IndCallSites        0
+DYFieldObjs         0
+MemObjects          11
+Pointers            43
+NumOfFieldExpand    0
+DYFieldPtrs         0
+NumOfSFRs           0
+GepProcessed        0
+LoadProcessed       0
+CopyProcessed       0
+StoreProcessed      0
+AddrProcessed       9
+TotalObjects        11
+NullPointer         0
+TotalPointers       43
+#######################################################
+
+****Memory SSA Statistics****
+
+************************
+################ (program : )###############
+-------------------------------------------------------
+AverageRegSize      1
+SSARenameTime       0
+InsertPHITime       0
+GenMUCHITime        0.003
+GenRegionTime       0
+TotalMSSATime       0.003
+BBHasMSSAPhi        1
+StoreHasChi         6
+MaxRegSize          1
+MemRegions          6
+FunHasRetMu         3
+FunEntryChi         7
+StoreChiNode        6
+LoadMuNode          7
+MSSAPhi             1
+LoadHasMu           7
+CSChiNode           0
+CSMuNode            3
+CSHasChi            0
+FunRetMu            7
+FunHasEntryChi      3
+CSHasMu             3
+#######################################################
+==========FUNCTION: add==========
+13V_1 = ENCHI(MR_13V_0) 	pts{12 }
+6V_1 = ENCHI(MR_6V_0) 	pts{6 }
+  %2 = alloca i32, align 4
+  store i32 %0, i32* %2, align 4
+13V_2 = STCHI(MR_13V_1) 	pts{12 }
+
+LDMU(MR_6V_1) 	pts{6 }
+  %3 = load i32, i32* @globvar, align 4
+
+LDMU(MR_13V_2) 	pts{12 }
+  %4 = load i32, i32* %2, align 4
+  %5 = add nsw i32 %3, %4
+  ret i32 %5
+RETMU(MR_13V_2) 	pts{12 }
+RETMU(MR_6V_1) 	pts{6 }
+==========FUNCTION: main==========
+10V_1 = ENCHI(MR_10V_0) 	pts{24 }
+8V_1 = ENCHI(MR_8V_0) 	pts{22 }
+6V_1 = ENCHI(MR_6V_0) 	pts{6 }
+  %1 = alloca i32, align 4
+  %2 = alloca i32, align 4
+  store i32 0, i32* %1, align 4
+8V_2 = STCHI(MR_8V_1) 	pts{22 }
+
+CALMU(MR_6V_1) 	pts{6 }
+  %3 = call i32 @add(i32 13)
+
+CALMU(MR_6V_1) 	pts{6 }
+  %4 = call i32 @add(i32 %3)
+
+CALMU(MR_6V_1) 	pts{6 }
+  %5 = call i32 @add(i32 12)
+  store i32 %5, i32* %2, align 4
+10V_2 = STCHI(MR_10V_1) 	pts{24 }
+
+LDMU(MR_10V_2) 	pts{24 }
+  %6 = load i32, i32* %2, align 4
+  ret i32 %6
+RETMU(MR_10V_2) 	pts{24 }
+RETMU(MR_8V_2) 	pts{22 }
+RETMU(MR_6V_1) 	pts{6 }
+==========FUNCTION: factorial==========
+4V_1 = ENCHI(MR_4V_0) 	pts{41 }
+2V_1 = ENCHI(MR_2V_0) 	pts{39 }
+  %2 = alloca i32, align 4
+  %3 = alloca i32, align 4
+  store i32 %0, i32* %3, align 4
+4V_2 = STCHI(MR_4V_1) 	pts{41 }
+
+LDMU(MR_4V_2) 	pts{41 }
+  %4 = load i32, i32* %3, align 4
+  %5 = icmp eq i32 %4, 0
+  br i1 %5, label %6, label %7
+  store i32 1, i32* %2, align 4
+2V_2 = STCHI(MR_2V_1) 	pts{39 }
+
+  br label %13
+
+LDMU(MR_4V_2) 	pts{41 }
+  %8 = load i32, i32* %3, align 4
+
+LDMU(MR_4V_2) 	pts{41 }
+  %9 = load i32, i32* %3, align 4
+  %10 = sub nsw i32 %9, 1
+  %11 = call i32 @factorial(i32 %10)
+  %12 = mul nsw i32 %8, %11
+  store i32 %12, i32* %2, align 4
+2V_4 = STCHI(MR_2V_1) 	pts{39 }
+
+  br label %13
+2V_3 = PHI(MR_2V_4, MR_2V_2, )
+
+LDMU(MR_2V_3) 	pts{39 }
+  %14 = load i32, i32* %2, align 4
+  ret i32 %14
+****SVFG Statistics****
+
+************************
+################ (program : )###############
+-------------------------------------------------------
+AvgWeight           1
+OptTime             0
+ATNodeTime          0
+TLNodeTime          0
+ConnIndEdgeTime     0
+ConnDirEdgeTime     0
+TotalTime           0
+MaxIndOutDeg        4
+MaxIndInDeg         3
+Copy                1
+FormalParam         2
+IndCallEdge         3
+TotalNode           70
+DirectEdge          44
+AvgIndOutDeg        1
+ActualRet           4
+AvgIndInDeg         1
+ActualParam         4
+FormalRet           3
+Addr                13
+PHI                 3
+IndRetEdge          0
+ActualOut           0
+MaxOutDegree        4
+ActualIn            3
+TotalEdge           73
+FormalOut           7
+MaxInDegree         3
+Store               7
+FormalIn            7
+IndirectEdgeLabels  29
+Gep                 0
+Load                7
+MSSAPhi             1
+IndirectEdge        29
+DirectCallEdge      4
+AvgInDegree         1
+DirectRetEdge       4
+AvgOutDegree        1
+#######################################################
+
+RETMU(MR_4V_2) 	pts{41 }
+RETMU(MR_2V_3) 	pts{39 }

@@ -3,6 +3,15 @@
 A modification of the LLVM compiler infrastructure for automatically inserting fences in weak memory model concurrent programs.
 
 ## Running instructions
+
+### Setting SVF
+
+When first getting the repository you have to compile SVF, which is used 
+by our tool for memory analysis of the input programs.
+
+
+
+### Running and building the fencer
 The main python script can be used to compile the test programs and run the tool against them. First compile by running:
 ```bash
 $ python main.py --compile-tests
@@ -11,6 +20,8 @@ And then run the tool by doing:
 ```bash
 $ python main.py --run
 ```
+
+
 
 
 ## Requirements 

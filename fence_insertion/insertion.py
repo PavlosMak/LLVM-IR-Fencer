@@ -40,5 +40,6 @@ class FenceInserter:
         # TODO call Instruction.create_instruction
         pass
 
+
     def insert_fences(self):
-        pass
+        print(self.ir_txt)

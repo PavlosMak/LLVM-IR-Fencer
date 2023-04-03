@@ -1,12 +1,9 @@
-from enum import Enum
 from collections import defaultdict
+from fence_insertion.pointer_analysis import SVF
+from fence_insertion.pointer_analysis import MemAccessDirection
 
 
 class AbstractEvent:
-    class MemAccessDirection(Enum):
-        READ = 0
-        WRITE = 1
-
     # This might be an overkill but not sure
     # how much detail we need.
     class MemoryLoc:

@@ -1,7 +1,9 @@
 import argparse
 import os
 
+
 from fence_insertion.insertion import FenceInserter
+from fence_insertion.pointer_analysis import SVF
 
 # This is set in the main function, if you want to point it to a different location
 # set it manually here and remove the corresponding line from main.
@@ -28,7 +30,6 @@ def run():
                 f = FenceInserter(file)
         os.chdir(parent_dir)
 
-
 def compile_tests():
     '''Compiles the test programs, of the `testPrograms` directory.'''
     dirs = ["test_programs", "test_programs/classic", "test_programs/fast"]
@@ -45,8 +46,6 @@ if __name__ == '__main__':
     # First set the path SVF
     local_path = os.getcwd()
     WPA_PATH = f"{local_path}/SVF-SVF-2.2/Release-build/bin/wpa"
-    os.chdir("test_programs")
-    os.system(f"{WPA_PATH} -ander  -svfg -dump-callgraph -print-pts add.ll")
     # Parse arguments and run
     parsed_args = parser.parse_args()
     if parsed_args.compile_tests:

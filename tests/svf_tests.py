@@ -3,7 +3,6 @@ import os
 
 from fence_insertion.pointer_analysis import SVF
 
-
 class MyTestCase(unittest.TestCase):
 
     def smoke_test_memLocation(self):

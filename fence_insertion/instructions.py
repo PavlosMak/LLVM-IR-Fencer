@@ -31,8 +31,16 @@ class Instruction:
         """
         self.program_point = program_point
 
-    def create_instruction(instr: llvm.ValueRef):
-        pass
+    def create_instruction(self, instr: llvm.ValueRef):
+        if '=' in instr:
+            return Assignment(instr, 0)
+        split_instr = instr.split()
+        if split_instr[0] == "call":
+            return FunctionCall(instr, 0)
+        elif split_instr[0] == "icmp":
+            return Guard(instr, 0)
+        else:
+            return
 
 
 class Assignment(Instruction):
@@ -45,10 +53,9 @@ class Assignment(Instruction):
         super().__init__(program_point)
         split = instr.split(" = ")
         self.lhs = split[0].replace(" ", "")
-        self.rhs = split[1].strip() #TODO: Instruction
-        split_rhs = self.rhs.split(" ")
-        if split_rhs[0] == "call": #function call
-            self.functionCall = FunctionCall(self.rhs, program_point)
+        self.rhs = split[1].strip()
+        self.recursive = Instruction.create_instruction(Instruction, self.rhs)
+        
 
 
     def evts(self) -> set:
@@ -75,7 +82,13 @@ class FunctionCall(Instruction):
         
 
 class Guard(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new assignment instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
+        self.comparision_type = instr.split()[1]
 
 
 class UnconditionalForwardJmp(Instruction):

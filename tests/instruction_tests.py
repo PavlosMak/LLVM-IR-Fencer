@@ -1,6 +1,6 @@
 import unittest
 from fence_insertion.instructions import *
-
+from unittest import mock
 
 class AssingmentTests(unittest.TestCase):
     def test_creation(self):
@@ -40,6 +40,18 @@ class AssingmentTests(unittest.TestCase):
         self.assertIsInstance(temp, Assignment)
         self.assertIsInstance(temp.recursive, Guard)
         self.assertEqual("eq", temp.recursive.comparision_type)
+
+    def test_jmp(self):
+        line_instruction = "br label %12"
+        cons = Instruction(10)
+        temp = cons.create_instruction(line_instruction)
+        self.assertIsInstance(temp, Jmp)
+        
+    def test_jmp(self):
+        line_instruction = "br i1 %14, label %15, label %19" 
+        cons = Instruction(10)
+        temp = cons.create_instruction(line_instruction)
+        self.assertIsInstance(temp.backCondJump[0], ConditionalBackwardJmp)
 
 
 if __name__ == '__main__':

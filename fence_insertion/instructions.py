@@ -1,5 +1,8 @@
 import llvmlite.binding as llvm
 
+def isForwardJmp(line_number: int, label: str):
+    return False
+
 
 class Line:
     def __init__(self, line: str, line_number: int = None):
@@ -120,26 +123,68 @@ class Jmp(Instruction):
         super().__init__(program_point)
         instr.replace(",", "")
         tokens = instr.split(" ")
+        self.backCondJump = []
+        self.forwUnCondJump = []
         if tokens[1] != "label": #defines conditional jump
-            pass
-        else:
-            pass
+            firstlabel = tokens[4][1:]
+            secondlabel = tokens[6][1:]
+
+            if isForwardJmp(program_point, firstlabel):
+                self.forwUnCondJump.append(UnconditionalForwardJmp(instr, program_point))
+            else:
+                self.backCondJump.append(ConditionalBackwardJmp(instr, program_point))
+            if isForwardJmp(program_point, secondlabel):
+                self.forwUnCondJump.append(UnconditionalForwardJmp(instr, program_point))
+            else:
+                self.backCondJump.append(ConditionalBackwardJmp(instr, program_point))
+        else: #defines unconditional jump
+            label = tokens[2][1:]
+            if isForwardJmp(program_point, label):
+                #unconditional forward jump
+                self.forwUnCondJump.append(UnconditionalForwardJmp(instr, program_point))
+                pass      
+            else: 
+                #unconditional backward jump 
+                #should not happen
+                pass
 
 
 class AssumeAssertSkip(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new assert instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
+        self.comparision_type = instr.split()[1]
 
 
 class AtomicSection(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new atomic instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
+    
 
 
 class NewThread(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new guard instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
 
 
 class EndThread(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new guard instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
 
 
 class OtherInstruction(Instruction):

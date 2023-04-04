@@ -55,8 +55,6 @@ class Assignment(Instruction):
         self.lhs = split[0].replace(" ", "")
         self.rhs = split[1].strip()
         self.recursive = Instruction.create_instruction(Instruction, self.rhs)
-        
-
 
     def evts(self) -> set:
         pass
@@ -76,7 +74,7 @@ class FunctionCall(Instruction):
         function_call = split[1] #full function call
         
         param = function_call.split("(")
-        self.function_name = param[0] #contains the function call 
+        self.function_name = param[0] #contains the function call
 
         
         

@@ -44,6 +44,12 @@ class Instruction:
             return Guard(instr, 0)
         elif split_instr[0] == "br":
             return Jmp(instr, self.program_point)
+        elif split_instr[0] =="pthread_create":
+            return NewThread(instr, self.program_point)
+        elif split_instr[0] =="pthread_join":
+            return EndThread(instr, self.program_point)
+        elif split_instr[0] == "__assert_fail":
+            return AssumeAssertSkip(instr, self.program_point)
         else:
             return
 

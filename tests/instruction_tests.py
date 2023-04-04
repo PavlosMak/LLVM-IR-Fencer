@@ -61,7 +61,7 @@ class AssingmentTests(unittest.TestCase):
         temp = cons.create_instruction(line_instruction)
         self.assertIsInstance(temp, Jmp)
         self.assertEqual(len(temp.backCondJump), 2)
-        self.assertIsInstance(temp.forwUnCondJump[0], UnconditionalForwardJmp)
-        self.assertIsInstance(temp.forwUnCondJump[1], UnconditionalForwardJmp)
+        self.assertIsInstance(temp.backCondJump[0], ConditionalBackwardJmp)
+        self.assertIsInstance(temp.backCondJump[1], ConditionalBackwardJmp)
 if __name__ == '__main__':
     unittest.main()

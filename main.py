@@ -1,9 +1,10 @@
 import argparse
 import os
-
+import unittest
 
 from fence_insertion.insertion import FenceInserter
 from fence_insertion.pointer_analysis import SVF
+import tests.instruction_tests
 
 # This is set in the main function, if you want to point it to a different location
 # set it manually here and remove the corresponding line from main.
@@ -16,6 +17,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument("--compile-tests", action="store_true", help="Compiles test programs")
 parser.add_argument("--run", action="store_true", help="Runs the test programs")
 parser.add_argument("--configure", action="store_true", help="Configures the tool")
+parser.add_argument("--python-tests", action="store_true", help="Verify parsing")
 
 
 def run():
@@ -41,6 +43,10 @@ def compile_tests():
                 os.system(f"clang-12 -S -emit-llvm {file}")
         os.chdir(parent_dir)
 
+def python_test():
+    suite = unittest.defaultTestLoader.loadTestsFromTestCase(tests.instruction_tests.AssingmentTests)
+    unittest.TextTestRunner().run(suite)
+
 
 if __name__ == '__main__':
     # First set the path SVF
@@ -54,3 +60,7 @@ if __name__ == '__main__':
     if parsed_args.run:
         print("Inserting fences...")
         run()
+    if parsed_args.python_tests:
+        print("running python tests")
+        python_test()
+

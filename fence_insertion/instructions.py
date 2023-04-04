@@ -33,12 +33,14 @@ class Instruction:
 
     def create_instruction(self, instr: llvm.ValueRef):
         if '=' in instr:
-            return Assignment(instr, 0)
+            return Assignment(instr, self.program_point)
         split_instr = instr.split()
         if split_instr[0] == "call":
-            return FunctionCall(instr, 0)
+            return FunctionCall(instr, self.program_point)
         elif split_instr[0] == "icmp":
             return Guard(instr, 0)
+        elif split_instr[0] == "br":
+            return Jmp(instr, self.program_point)
         else:
             return
 
@@ -54,7 +56,8 @@ class Assignment(Instruction):
         split = instr.split(" = ")
         self.lhs = split[0].replace(" ", "")
         self.rhs = split[1].strip()
-        self.recursive = Instruction.create_instruction(Instruction, self.rhs)
+        rec_instr = Instruction(program_point)
+        self.recursive = rec_instr.create_instruction(self.rhs)
 
     def evts(self) -> set:
         pass
@@ -66,7 +69,7 @@ class Assignment(Instruction):
 class FunctionCall(Instruction):
     def __init__(self, instr: str, program_point: int):
         """
-        Creates a new assignment instruction
+        Creates a new function call instruction
         :param instr: The textual representation of the instruction.
         """
         super().__init__(program_point)
@@ -74,7 +77,7 @@ class FunctionCall(Instruction):
         function_call = split[1] #full function call
         
         param = function_call.split("(")
-        self.function_name = param[0] #contains the function call
+        self.function_name = param[0] #contains the function call name
 
         
         
@@ -82,7 +85,7 @@ class FunctionCall(Instruction):
 class Guard(Instruction):
     def __init__(self, instr: str, program_point: int):
         """
-        Creates a new assignment instruction
+        Creates a new guard instruction
         :param instr: The textual representation of the instruction.
         """
         super().__init__(program_point)
@@ -90,7 +93,37 @@ class Guard(Instruction):
 
 
 class UnconditionalForwardJmp(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new unconditional instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
+        
+
+class ConditionalBackwardJmp (Instruction):
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new unconditional instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
+
+# Every jump instruction can be simulated by a combination of a 
+# Unconditional forward jump and a conditional backward jump
+class Jmp(Instruction):
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new unconditional instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
+        instr.replace(",", "")
+        tokens = instr.split(" ")
+        if tokens[1] != "label": #defines conditional jump
+            pass
+        else:
+            pass
 
 
 class AssumeAssertSkip(Instruction):

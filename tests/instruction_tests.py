@@ -47,12 +47,21 @@ class AssingmentTests(unittest.TestCase):
         temp = cons.create_instruction(line_instruction)
         self.assertIsInstance(temp, Jmp)
         
-    def test_jmp(self):
+    def test_jmp_conditional(self):
         line_instruction = "br i1 %14, label %15, label %19" 
         cons = Instruction(10)
         temp = cons.create_instruction(line_instruction)
         self.assertIsInstance(temp.backCondJump[0], ConditionalBackwardJmp)
 
-
+    def test_jmp_conditional_forward(self):
+        isForwardJmp = mock.Mock()
+        isForwardJmp.return_value = True
+        line_instruction = "br i1 %14, label %15, label %19" 
+        cons = Instruction(10)
+        temp = cons.create_instruction(line_instruction)
+        self.assertIsInstance(temp, Jmp)
+        self.assertEqual(len(temp.backCondJump), 2)
+        self.assertIsInstance(temp.forwUnCondJump[0], UnconditionalForwardJmp)
+        self.assertIsInstance(temp.forwUnCondJump[1], UnconditionalForwardJmp)
 if __name__ == '__main__':
     unittest.main()

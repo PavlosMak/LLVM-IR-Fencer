@@ -3,6 +3,10 @@ import llvmlite.binding as llvm
 def isForwardJmp(line_number: int, label: str):
     return False
 
+def find_method_name(instr: str):
+    #find characters between @ and (
+    pass
+
 
 class Line:
     def __init__(self, line: str, line_number: int = None):
@@ -39,7 +43,15 @@ class Instruction:
             return Assignment(instr, self.program_point)
         split_instr = instr.split()
         if split_instr[0] == "call":
+            method_name = find_method_name(instr)
+            if method_name =="pthread_create":
+                return NewThread(instr, self.program_point)
+            elif method_name =="pthread_join":
+                return EndThread(instr, self.program_point)
+            elif method_name == "__assert_fail":
+                return AssumeAssertSkip(instr, self.program_point)
             return FunctionCall(instr, self.program_point)
+        
         elif split_instr[0] == "load":
             return Assignment(instr, self.program_point)
         elif split_instr[0] == "store":
@@ -48,12 +60,7 @@ class Instruction:
             return Guard(instr, 0)
         elif split_instr[0] == "br":
             return Jmp(instr, self.program_point)
-        elif split_instr[0] =="pthread_create":
-            return NewThread(instr, self.program_point)
-        elif split_instr[0] =="pthread_join":
-            return EndThread(instr, self.program_point)
-        elif split_instr[0] == "__assert_fail":
-            return AssumeAssertSkip(instr, self.program_point)
+        
         else:
             return OtherInstruction(instr, self.program_point)
 

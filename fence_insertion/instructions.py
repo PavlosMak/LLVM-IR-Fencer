@@ -40,6 +40,10 @@ class Instruction:
         split_instr = instr.split()
         if split_instr[0] == "call":
             return FunctionCall(instr, self.program_point)
+        elif split_instr[0] == "load":
+            return Assignment(instr, self.program_point)
+        elif split_instr[0] == "store":
+            return Assignment(instr, self.program_point)
         elif split_instr[0] == "icmp":
             return Guard(instr, 0)
         elif split_instr[0] == "br":
@@ -51,7 +55,7 @@ class Instruction:
         elif split_instr[0] == "__assert_fail":
             return AssumeAssertSkip(instr, self.program_point)
         else:
-            return
+            return OtherInstruction(instr, self.program_point)
 
 
 class Assignment(Instruction):
@@ -194,4 +198,9 @@ class EndThread(Instruction):
 
 
 class OtherInstruction(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new guard instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)

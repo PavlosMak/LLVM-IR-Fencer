@@ -74,10 +74,20 @@ class Assignment(Instruction):
         """
         super().__init__(program_point)
         split = instr.split(" = ")
-        self.lhs = split[0].replace(" ", "")
-        self.rhs = split[1].strip()
-        rec_instr = Instruction(program_point)
-        self.recursive = rec_instr.create_instruction(self.rhs)
+        if len(split) == 2:
+            self.lhs = split[0].replace(" ", "")
+            self.rhs = split[1].strip()
+            rec_instr = Instruction(program_point)
+            self.recursive = rec_instr.create_instruction(self.rhs)
+        else: #load or store instruction
+            token = instr.split(" ")[0]
+            if token == "load":
+                rec_instr = Instruction(program_point)
+                self.recursive = rec_instr.create_instruction(instr[5:])
+            else: #store instruction
+                rec_instr = Instruction(program_point)
+                self.recursive = rec_instr.create_instruction(instr[6:])
+            
 
     def evts(self) -> set:
         pass

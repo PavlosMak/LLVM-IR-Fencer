@@ -63,5 +63,17 @@ class AssingmentTests(unittest.TestCase):
         self.assertEqual(len(temp.backCondJump), 2)
         self.assertIsInstance(temp.backCondJump[0], ConditionalBackwardJmp)
         self.assertIsInstance(temp.backCondJump[1], ConditionalBackwardJmp)
+
+    def test_create_thread(self):
+        line_instruction = "call void @pthread_create()" 
+        cons = Instruction(10)
+        temp = cons.create_instruction(line_instruction)
+        self.assertIsInstance(temp, NewThread)
+
+    def test_join_thread(self):
+        line_instruction = "call void @pthread_join()" 
+        cons = Instruction(10)
+        temp = cons.create_instruction(line_instruction)
+        self.assertIsInstance(temp, EndThread)
 if __name__ == '__main__':
     unittest.main()

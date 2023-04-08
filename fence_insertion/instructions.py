@@ -4,9 +4,9 @@ def isForwardJmp(line_number: int, label: str):
     return False
 
 def find_method_name(instr: str):
-    #find characters between @ and (
-    pass
-
+    start_method_name = instr.find('@')
+    end_method_name = instr.find('(') 
+    return instr[start_method_name+1: end_method_name]
 
 class Line:
     def __init__(self, line: str, line_number: int = None):
@@ -44,6 +44,7 @@ class Instruction:
         split_instr = instr.split()
         if split_instr[0] == "call":
             method_name = find_method_name(instr)
+            print(method_name)
             if method_name =="pthread_create":
                 return NewThread(instr, self.program_point)
             elif method_name =="pthread_join":

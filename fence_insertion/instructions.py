@@ -1,5 +1,12 @@
 import llvmlite.binding as llvm
 
+def isForwardJmp(line_number: int, label: str):
+    return False
+
+def find_method_name(instr: str):
+    start_method_name = instr.find('@')
+    end_method_name = instr.find('(') 
+    return instr[start_method_name+1: end_method_name]
 
 class Line:
     def __init__(self, line: str, line_number: int = None):
@@ -32,30 +39,56 @@ class Instruction:
         self.program_point = program_point
 
     def create_instruction(self, instr: llvm.ValueRef):
-        pass
         if '=' in instr:
-            return Assignment(instr, 0)
+            return Assignment(instr, self.program_point)
         split_instr = instr.split()
         if split_instr[0] == "call":
-            return FunctionCall(instr, 0)
+            method_name = find_method_name(instr)
+            print(method_name)
+            if method_name =="pthread_create":
+                return NewThread(instr, self.program_point)
+            elif method_name =="pthread_join":
+                return EndThread(instr, self.program_point)
+            elif method_name == "__assert_fail":
+                return AssumeAssertSkip(instr, self.program_point)
+            return FunctionCall(instr, self.program_point)
+        
+        elif split_instr[0] == "load":
+            return Assignment(instr, self.program_point)
+        elif split_instr[0] == "store":
+            return Assignment(instr, self.program_point)
         elif split_instr[0] == "icmp":
             return Guard(instr, 0)
+        elif split_instr[0] == "br":
+            return Jmp(instr, self.program_point)
+        
         else:
-            return
+            return OtherInstruction(instr, self.program_point)
 
 
 class Assignment(Instruction):
 
     def __init__(self, instr: str, program_point: int):
         """
-        Creates a new assingment instruction
+        Creates a new assignment instruction
         :param instr: The textual representation of the instruction.
         """
         super().__init__(program_point)
         split = instr.split(" = ")
-        self.lhs = split[0].replace(" ", "")
-        self.rhs = split[1].strip()
-        self.recursive = Instruction.create_instruction(Instruction, self.rhs)
+        if len(split) == 2:
+            self.lhs = split[0].replace(" ", "")
+            self.rhs = split[1].strip()
+            rec_instr = Instruction(program_point)
+            self.recursive = rec_instr.create_instruction(self.rhs)
+        else: #load or store instruction
+            token = instr.split(" ")[0]
+            if token == "load":
+                rec_instr = Instruction(program_point)
+                self.recursive = rec_instr.create_instruction(instr[5:])
+            else: #store instruction
+                rec_instr = Instruction(program_point)
+                self.recursive = rec_instr.create_instruction(instr[6:])
+            
 
     def evts(self) -> set:
         pass
@@ -67,7 +100,7 @@ class Assignment(Instruction):
 class FunctionCall(Instruction):
     def __init__(self, instr: str, program_point: int):
         """
-        Creates a new assignment instruction
+        Creates a new function call instruction
         :param instr: The textual representation of the instruction.
         """
         super().__init__(program_point)
@@ -75,13 +108,15 @@ class FunctionCall(Instruction):
         function_call = split[1] #full function call
         
         param = function_call.split("(")
-        self.function_name = param[0] #contains the function call
+        self.function_name = param[0] #contains the function call name
 
+        
+        
 
 class Guard(Instruction):
     def __init__(self, instr: str, program_point: int):
         """
-        Creates a new assignment instruction
+        Creates a new guard instruction
         :param instr: The textual representation of the instruction.
         """
         super().__init__(program_point)
@@ -89,24 +124,101 @@ class Guard(Instruction):
 
 
 class UnconditionalForwardJmp(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new unconditional instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
+        
+
+class ConditionalBackwardJmp (Instruction):
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new unconditional instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
+
+# Every jump instruction can be simulated by a combination of a 
+# Unconditional forward jump and a conditional backward jump
+class Jmp(Instruction):
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new unconditional instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
+        instr.replace(",", "")
+        tokens = instr.split(" ")
+        self.backCondJump = []
+        self.forwUnCondJump = []
+        if tokens[1] != "label": #defines conditional jump
+            firstlabel = tokens[4][1:]
+            secondlabel = tokens[6][1:]
+
+            if isForwardJmp(program_point, firstlabel):
+                self.forwUnCondJump.append(UnconditionalForwardJmp(instr, program_point))
+            else:
+                self.backCondJump.append(ConditionalBackwardJmp(instr, program_point))
+            if isForwardJmp(program_point, secondlabel):
+                self.forwUnCondJump.append(UnconditionalForwardJmp(instr, program_point))
+            else:
+                self.backCondJump.append(ConditionalBackwardJmp(instr, program_point))
+        else: #defines unconditional jump
+            label = tokens[2][1:]
+            if isForwardJmp(program_point, label):
+                #unconditional forward jump
+                self.forwUnCondJump.append(UnconditionalForwardJmp(instr, program_point))
+                pass      
+            else: 
+                #unconditional backward jump 
+                #should not happen
+                pass
 
 
 class AssumeAssertSkip(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new assert instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
+        self.comparision_type = instr.split()[1]
 
 
 class AtomicSection(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new atomic instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
+    
 
 
 class NewThread(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new guard instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
 
 
 class EndThread(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new guard instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)
 
 
 class OtherInstruction(Instruction):
-    pass
+    def __init__(self, instr: str, program_point: int):
+        """
+        Creates a new guard instruction
+        :param instr: The textual representation of the instruction.
+        """
+        super().__init__(program_point)

@@ -2,6 +2,7 @@ import unittest
 from fence_insertion.instructions import *
 from unittest import mock
 
+
 class AssingmentTests(unittest.TestCase):
     def test_creation(self):
         ir = " %8 = load i32, i32* %3, align 4"
@@ -46,9 +47,9 @@ class AssingmentTests(unittest.TestCase):
         cons = Instruction(10)
         temp = cons.create_instruction(line_instruction)
         self.assertIsInstance(temp, Jmp)
-        
+
     def test_jmp_conditional(self):
-        line_instruction = "br i1 %14, label %15, label %19" 
+        line_instruction = "br i1 %14, label %15, label %19"
         cons = Instruction(10)
         temp = cons.create_instruction(line_instruction)
         self.assertIsInstance(temp.backCondJump[0], ConditionalBackwardJmp)
@@ -56,7 +57,7 @@ class AssingmentTests(unittest.TestCase):
     def test_jmp_conditional_forward(self):
         isForwardJmp = mock.Mock()
         isForwardJmp.return_value = True
-        line_instruction = "br i1 %14, label %15, label %19" 
+        line_instruction = "br i1 %14, label %15, label %19"
         cons = Instruction(10)
         temp = cons.create_instruction(line_instruction)
         self.assertIsInstance(temp, Jmp)
@@ -65,15 +66,17 @@ class AssingmentTests(unittest.TestCase):
         self.assertIsInstance(temp.backCondJump[1], ConditionalBackwardJmp)
 
     def test_create_thread(self):
-        line_instruction = "call void @pthread_create()" 
+        line_instruction = "call void @pthread_create()"
         cons = Instruction(10)
         temp = cons.create_instruction(line_instruction)
         self.assertIsInstance(temp, NewThread)
 
     def test_join_thread(self):
-        line_instruction = "call void @pthread_join()" 
+        line_instruction = "call void @pthread_join()"
         cons = Instruction(10)
         temp = cons.create_instruction(line_instruction)
         self.assertIsInstance(temp, EndThread)
+
+
 if __name__ == '__main__':
     unittest.main()

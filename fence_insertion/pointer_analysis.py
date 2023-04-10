@@ -34,6 +34,9 @@ class MemoryAccess:
 class SVF:
     def __init__(self, path_to_wpa: str):
         self.location = path_to_wpa
+        # This can be used to resolve the address registers point to transitively it's
+        # "signature" is function -> (reg, mem_location)
+        self.register_resolution = dict()
 
     def run(self, path_to_file: str) -> list:
         """
@@ -62,10 +65,12 @@ class SVF:
                 # Parse LDMU annotation and get corresponding instruction
                 location = log[5: log.index(")")]
                 instr = mem_ssa[i + 1].strip()
+                register = instr[:instr.index(" = ")]
                 results[curr_func].append(MemoryAccess(location, curr_func, MemAccessDirection.READ, instr))
             elif "STCHI" in log:
                 # Parse STCHI annotation and get corresponding instruction
                 location = log[log.index("STCHI") + 6: log.index(")")]
                 instr = mem_ssa[i - 1].strip()
+                register = instr[instr.index("%"):instr.index(",")]
                 results[curr_func].append(MemoryAccess(location, curr_func, MemAccessDirection.WRITE, instr))
         return results

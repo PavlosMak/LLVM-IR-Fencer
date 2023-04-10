@@ -36,6 +36,17 @@ def run():
         os.chdir(parent_dir)
 
 
+def run_on_single_file(filename: str):
+    """
+    Runs the given test program through the fence insertion pass.
+    Note that it needs to be compiled first by running `compile-tests`.
+    """
+    parent_dir = os.getcwd()
+    os.chdir("test_programs")
+    analyser = ProgramAnalyser(filename, WPA_PATH)
+    inserter = FenceInserter(analyser.get_aeg())
+    os.chdir(parent_dir)
+
 def compile_tests():
     '''Compiles the test programs, of the `testPrograms` directory.'''
     dirs = ["test_programs", "test_programs/classic", "test_programs/fast"]
@@ -59,12 +70,14 @@ if __name__ == '__main__':
     WPA_PATH = f"{local_path}/SVF-SVF-2.2/Release-build/bin/wpa"
     # Parse arguments and run
     parsed_args = parser.parse_args()
-    if parsed_args.compile_tests:
-        print("Compiling test programs...")
-        compile_tests()
-    if parsed_args.run:
-        print("Inserting fences...")
-        run()
-    if parsed_args.python_tests:
-        print("running python tests")
-        python_test()
+
+    run_on_single_file("memory_test.ll")
+    # if parsed_args.compile_tests:
+    #     print("Compiling test programs...")
+    #     compile_tests()
+    # if parsed_args.run:
+    #     print("Inserting fences...")
+    #     run()
+    # if parsed_args.python_tests:
+    #     print("running python tests")
+    #     python_test()

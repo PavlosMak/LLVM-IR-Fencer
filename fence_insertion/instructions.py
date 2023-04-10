@@ -1,4 +1,5 @@
 import llvmlite.binding as llvm
+from fence_insertion.pointer_analysis import MemoryAccess
 
 
 def isForwardJmp(line_number: int, label: str):
@@ -40,33 +41,36 @@ class Instruction:
         :param program_point: The program point the instruction appears in (line number)
         """
         self.program_point = program_point
+        self.mem_access = None
 
-    def create_instruction(instr: llvm.ValueRef, program_point: int):
+    def create_instruction(instr: llvm.ValueRef, program_point: int, mem_access: MemoryAccess = None):
         str_instr = str(instr)
+        result_instr = None
         if '=' in str_instr:
-            return Assignment(str_instr, program_point)
+            result_instr = Assignment(str_instr, program_point)
         split_instr = str_instr.split()
         if split_instr[0] == "call":
             method_name = find_method_name(str_instr)
             if method_name == "pthread_create":
-                return NewThread(str_instr, program_point)
+                result_instr = NewThread(str_instr, program_point)
             elif method_name == "pthread_join":
-                return EndThread(str_instr, program_point)
+                result_instr = EndThread(str_instr, program_point)
             elif method_name == "__assert_fail":
-                return AssumeAssertSkip(str_instr, program_point)
-            return FunctionCall(str_instr, program_point)
+                result_instr = AssumeAssertSkip(str_instr, program_point)
+            result_instr = FunctionCall(str_instr, program_point)
 
         elif split_instr[0] == "load":
-            return Assignment(str_instr, program_point)
+            result_instr = Assignment(str_instr, program_point)
         elif split_instr[0] == "store":
-            return Assignment(str_instr, program_point)
+            result_instr = Assignment(str_instr, program_point)
         elif split_instr[0] == "icmp":
-            return Guard(str_instr, 0)
+            result_instr = Guard(str_instr, 0)
         elif split_instr[0] == "br":
-            return Jmp(str_instr, program_point)
-
+            result_instr = Jmp(str_instr, program_point)
         else:
-            return OtherInstruction(str_instr, program_point)
+            result_instr = OtherInstruction(str_instr, program_point)
+        result_instr.mem_access = mem_access
+        return result_instr
 
 
 class Assignment(Instruction):
@@ -91,12 +95,6 @@ class Assignment(Instruction):
             else:  # store instruction
                 rec_instr = Instruction(program_point)
                 self.recursive = rec_instr.create_instruction(instr[6:])
-
-    def evts(self) -> set:
-        pass
-
-    def trg(self) -> set:
-        pass
 
 
 class FunctionCall(Instruction):

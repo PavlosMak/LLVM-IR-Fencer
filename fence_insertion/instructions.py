@@ -48,6 +48,8 @@ class Instruction:
         result_instr = None
         if '=' in str_instr:
             result_instr = Assignment(str_instr, program_point)
+            result_instr.mem_access = mem_access
+            return result_instr
         split_instr = str_instr.split()
         if split_instr[0] == "call":
             method_name = find_method_name(str_instr)
@@ -57,8 +59,8 @@ class Instruction:
                 result_instr = EndThread(str_instr, program_point)
             elif method_name == "__assert_fail":
                 result_instr = AssumeAssertSkip(str_instr, program_point)
-            result_instr = FunctionCall(str_instr, program_point)
-
+            else:
+                result_instr = FunctionCall(str_instr, program_point)
         elif split_instr[0] == "load":
             result_instr = Assignment(str_instr, program_point)
         elif split_instr[0] == "store":
@@ -86,15 +88,15 @@ class Assignment(Instruction):
             self.lhs = split[0].replace(" ", "")
             self.rhs = split[1].strip()
             rec_instr = Instruction(program_point)
-            self.recursive = rec_instr.create_instruction(self.rhs)
+            self.recursive = Instruction.create_instruction(self.rhs, program_point)
         else:  # load or store instruction
             token = instr.split(" ")[0]
             if token == "load":
                 rec_instr = Instruction(program_point)
-                self.recursive = rec_instr.create_instruction(instr[5:])
+                self.recursive = Instruction.create_instruction(instr[5:], program_point)
             else:  # store instruction
                 rec_instr = Instruction(program_point)
-                self.recursive = rec_instr.create_instruction(instr[6:])
+                self.recursive = Instruction.create_instruction(instr[6:], program_point)
 
 
 class FunctionCall(Instruction):

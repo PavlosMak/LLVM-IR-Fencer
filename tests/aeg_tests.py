@@ -2,6 +2,7 @@ import unittest
 from fence_insertion.aeg import AbstractEventGraph
 from fence_insertion.aeg import AbstractEventGraphNode
 from fence_insertion.aeg import AbstractEvent
+from fence_insertion.pointer_analysis import MemAccessDirection
 
 
 class AbstractEventGraphTests(unittest.TestCase):
@@ -32,6 +33,24 @@ class AbstractEventGraphTests(unittest.TestCase):
         actual_ids = [[node.id for node in cycle] for cycle in aeg.tarjan()]
         expected_ids = [[5, 4], [3, 2], [6, 1, 0]]
         self.assertEqual(expected_ids, actual_ids)
+
+    def test_add_pos_edges(self):
+        aeg = AbstractEventGraph()
+
+        event1 = AbstractEvent(0, MemAccessDirection.READ, "loc1")
+        event2 = AbstractEvent(0, MemAccessDirection.WRITE, "loc1")
+        event3 = AbstractEvent(1, MemAccessDirection.WRITE, "loc2")
+
+        aeg.add_pos_edges({event1}, {event2})
+        aeg.add_pos_edges({event1}, {event3})
+        aeg.add_pos_edges({event3}, {event2})
+
+        edges = list(aeg.edges.values())
+
+        # Not the strongest assertion but good enough (also verified manually)
+        self.assertEqual(2, len(edges[0]))
+        self.assertEqual(0, len(edges[1]))
+        self.assertEqual(1, len(edges[2]))
 
 
 if __name__ == '__main__':

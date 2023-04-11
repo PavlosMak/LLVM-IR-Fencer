@@ -127,15 +127,15 @@ class ProgramAnalyser:
 
             # In contrast to the original paper we have only two sets of events because
             # LLVM IR will not have reads in both sides of an assignment
-            evts1 = set(
+            evts2 = set(
                 [AbstractEvent(instr.program_point, MemAccessDirection.READ, mem_loc) for mem_loc in read_locations])
-            evts2 = set([AbstractEvent(instr.program_point, MemAccessDirection.WRITE, mem_loc) for mem_loc in
+            evts3 = set([AbstractEvent(instr.program_point, MemAccessDirection.WRITE, mem_loc) for mem_loc in
                          write_locations])
 
-            self.aeg.add_pos_edges(prev_evts, evts1)
-            self.aeg.add_pos_edges(evts1, evts2)
+            self.aeg.add_pos_edges(prev_evts, evts2)
+            self.aeg.add_pos_edges(evts2, evts3)
 
-            return self.construct_aeg_from_instruction(self.program_iterator.next(), evts2)
+            return self.construct_aeg_from_instruction(self.program_iterator.next(), evts3)
         elif instr_type == FunctionCall:
             func_name = instr.function_name
             return self.construct_aeg_from_instruction(self.program_iterator.next(), set())

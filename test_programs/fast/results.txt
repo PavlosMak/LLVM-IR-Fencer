@@ -1,3 +1,0 @@
-fence|Cilk_WSQ.c|pop|50|T|c::T|Cilk_WSQ.c|pop|52|H|c::H
-fence|Cilk_WSQ.c|pop|56|T|c::T|Cilk_WSQ.c|pop|57|H|c::H
-fence|Cilk_WSQ.c|steal|74|H|c::H|Cilk_WSQ.c|steal|76|T|c::T

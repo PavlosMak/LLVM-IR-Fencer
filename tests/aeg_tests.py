@@ -7,7 +7,7 @@ from fence_insertion.pointer_analysis import MemAccessDirection
 
 class AbstractEventGraphTests(unittest.TestCase):
     def test_tarjan(self):
-        dummy_event = AbstractEvent(0, AbstractEvent.MemAccessDirection.READ, AbstractEvent.MemoryLoc(0))
+        dummy_event = AbstractEvent(0, MemAccessDirection.READ, "%0")
         aeg = AbstractEventGraph()
         node0 = AbstractEventGraphNode(dummy_event, 0)
         node1 = AbstractEventGraphNode(dummy_event, 1)

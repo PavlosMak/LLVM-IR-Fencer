@@ -73,7 +73,8 @@ class SVF:
                 # Parse STCHI annotation and get corresponding instruction
                 location = log[log.index("STCHI") + 6: log.index(")")]
                 instr = mem_ssa[i - 1].strip()
-                register = instr[instr.index("%"):instr.index(",")]
-                self.register_resolution[curr_func].update({register: location})
+                if "%" in instr:
+                    register = instr[instr.index("%"):instr.index(",")]
+                    self.register_resolution[curr_func].update({register: location})
                 results[curr_func].append(MemoryAccess(location, curr_func, MemAccessDirection.WRITE, instr))
         return results

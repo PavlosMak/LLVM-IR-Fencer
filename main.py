@@ -45,12 +45,15 @@ def run_on_single_file(filename: str):
     parent_dir = os.getcwd()
     os.chdir("test_programs")
     analyser = ProgramAnalyser(filename, WPA_PATH)
-    inserter = FenceInserter(analyser.get_aeg())
+    aeg = analyser.get_aeg()
+    inserter = FenceInserter(aeg)
+    cycles = aeg.tarjan()
     os.chdir(parent_dir)
+
 
 def compile_tests():
     '''Compiles the test programs, of the `testPrograms` directory.'''
-    dirs = ["test_programs", "test_programs/classic", "test_programs/fast"]
+    dirs = ["test_programs"]
     parent_dir = os.getcwd()
     for directory in dirs:
         os.chdir(directory)
@@ -72,7 +75,7 @@ if __name__ == '__main__':
     # Parse arguments and run
     parsed_args = parser.parse_args()
 
-    run_on_single_file("add.ll")
+    run_on_single_file("store_buffer.ll")
     # if parsed_args.compile_tests:
     #     print("Compiling test programs...")
     #     compile_tests()

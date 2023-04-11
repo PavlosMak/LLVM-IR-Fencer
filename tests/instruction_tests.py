@@ -3,7 +3,7 @@ from fence_insertion.instructions import *
 from unittest import mock
 
 
-class AssingmentTests(unittest.TestCase):
+class AssignmentTests(unittest.TestCase):
     def test_creation(self):
         ir = " %8 = load i32, i32* %3, align 4"
         instr = Assignment(ir, 0)
@@ -16,6 +16,34 @@ class AssingmentTests(unittest.TestCase):
         temp = Instruction.create_instruction(line_instruction, 10)
         self.assertEqual("%3", temp.lhs)
         self.assertEqual("load i32, i32* @globvar, align 4", temp.rhs)
+        self.assertEqual({"%3"}, temp.writes)
+        self.assertEqual(set(), temp.reads)
+
+    def test_assignment_writes_reads(self):
+        line_instruction = "%2 = add nsw i32 %4, 3"  # writes %2, reads %4
+        line_instruction2 = "%2 = add nsw i32 %4, %5"  # writes %2, reads %4, %5
+        instr1 = Instruction.create_instruction(line_instruction, 10)
+        instr2 = Instruction.create_instruction(line_instruction2, 10)
+        self.assertEqual({"%2"}, instr1.writes)
+        self.assertEqual({"%2"}, instr2.writes)
+        self.assertEqual({"%4"}, instr1.reads)
+        self.assertEqual({"%4", "%5"}, instr2.reads)
+
+    def test_store_reads_writes(self):
+        line_instruction1 = "store i32 %0, i32* %2, align 4"
+        line_instruction2 = "store i32 42, i32* %2, align 4"
+        instr1 = Instruction.create_instruction(line_instruction1, 10)
+        instr2 = Instruction.create_instruction(line_instruction2, 10)
+        self.assertEqual({"%0"}, instr1.reads)
+        self.assertEqual(set(), instr2.reads)
+        self.assertEqual({"%2"}, instr1.writes)
+        self.assertEqual({"%2"}, instr2.writes)
+
+    def test_load_reads_writes(self):
+        line_instruction1 = "%6 = load i32, i32* %2, align 4"
+        instr1 = Instruction.create_instruction(line_instruction1, 10)
+        self.assertEqual({"%6"}, instr1.writes)
+        self.assertEqual({"%2"}, instr1.reads)
 
     def test_assignment_function(self):
         line_instruction = "  %9 = call i32 (...) @nondet()"

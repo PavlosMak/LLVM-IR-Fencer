@@ -1,3 +1,5 @@
+import re
+
 import llvmlite.binding as llvm
 from fence_insertion.pointer_analysis import MemoryAccess
 
@@ -84,19 +86,24 @@ class Assignment(Instruction):
         """
         super().__init__(program_point)
         split = instr.split(" = ")
+        self.reads = set()
+        self.writes = set()
         if len(split) == 2:
             self.lhs = split[0].replace(" ", "")
             self.rhs = split[1].strip()
+            self.writes = {self.lhs}
+            self.reads = set(re.findall(r"%\d+", self.rhs))
             rec_instr = Instruction(program_point)
             self.recursive = Instruction.create_instruction(self.rhs, program_point)
         else:  # load or store instruction
             token = instr.split(" ")[0]
             if token == "load":
-                rec_instr = Instruction(program_point)
+                self.reads = re.findall(r"%\d+", instr[5:])
                 self.recursive = Instruction.create_instruction(instr[5:], program_point)
             else:  # store instruction
-                rec_instr = Instruction(program_point)
                 self.recursive = Instruction.create_instruction(instr[6:], program_point)
+                self.reads = set(re.findall(r"%\d", instr[:instr.index(",")]))
+                self.writes = set(re.findall("%\d", instr[instr.index(","):]))
 
 
 class FunctionCall(Instruction):

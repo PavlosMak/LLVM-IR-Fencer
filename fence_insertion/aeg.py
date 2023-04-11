@@ -1,25 +1,22 @@
 from collections import defaultdict
-from fence_insertion.pointer_analysis import SVF
 from fence_insertion.pointer_analysis import MemAccessDirection
 
 
 class AbstractEvent:
-    # This might be an overkill but not sure
-    # how much detail we need.
-    class MemoryLoc:
-        def __init__(self, address: int):
-            self.address = address
 
-    def __init__(self, program_point: int, direction: MemAccessDirection, mem_loc: MemoryLoc):
+    def __init__(self, program_point: int, direction: MemAccessDirection, mem_loc: str):
         """
         Creates a new AbstractEvent
-        :param program_point: The program point (line number event occurs in)
-        :param direction: The direction of accessing the memory (reading or writing)
-        :param mem_loc: The memory location being accessed
+        :param program_point: The program point (line number event occurs in).
+        :param direction: The direction of accessing the memory (reading or writing).
+        :param mem_loc: The memory location being accessed.
         """
         self.program_point = program_point
         self.direction = direction
         self.memory_loc = mem_loc
+
+    def __hash__(self):
+        return hash((self.program_point, self.direction))
 
 
 class AbstractEventGraphNode:
@@ -38,10 +35,21 @@ class AbstractEventGraph:
         self.time = 0
         self.cycles = list()
         self.vertexCount = 0
+        self.recorded_events = dict()
 
-    def record_event(self, abstract_event: AbstractEvent):
+    def record_event(self, abstract_event: AbstractEvent) -> AbstractEventGraphNode:
+        """
+        Records an event into the graph.
+
+        :param abstract_event: The AbstractEvent to record.
+        :returns: The created AbstractEventGraphNode.
+        """
+        if abstract_event in self.recorded_events:
+            return self.recorded_events[abstract_event]
         node = AbstractEventGraphNode(abstract_event, self.vertexCount)
+        self.recorded_events.update({abstract_event: node})
         self.add_node(node)
+        return node
 
     def add_node(self, node: AbstractEventGraphNode):
         self.vertexCount += 1
@@ -51,6 +59,22 @@ class AbstractEventGraph:
         if from_node not in self.edges:
             self.add_node(from_node)
         self.edges[from_node].append(to_node)
+
+    def add_pos_edges(self, events1: set, events2: set):
+        """
+        Adds edges between the abstract events in the events1 set
+        and the abstract events in the events2 set.
+        For every event that is not associated with a node, a new node
+        is created.
+
+        :param events1: Set of AbstractEvent objects.
+        :param events2: Set of AbstractEvent objects.
+        """
+        nodes1 = [self.record_event(event) for event in events1]
+        nodes2 = [self.record_event(event) for event in events2]
+        for node1 in nodes1:
+            for node2 in nodes2:
+                self.add_edge(node1, node2)
 
     def tarjan_helper(self, u, low, disc, st):
         # Initialize discovery time and low value

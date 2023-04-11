@@ -6,6 +6,7 @@ from fence_insertion.insertion import FenceInserter
 from fence_insertion.analysis import ProgramAnalyser
 
 import tests.instruction_tests
+import tests.aeg_tests
 
 # This is set in the main function, if you want to point it to a different location
 # set it manually here and remove the corresponding line from main.
@@ -64,8 +65,10 @@ def compile_tests():
 
 
 def python_test():
-    suite = unittest.defaultTestLoader.loadTestsFromTestCase(tests.instruction_tests.AssingmentTests)
+    suite = unittest.defaultTestLoader.loadTestsFromTestCase(tests.instruction_tests.AssignmentTests)
     unittest.TextTestRunner().run(suite)
+    suite1= unittest.defaultTestLoader.loadTestsFromTestCase(tests.aeg_tests.AbstractEventGraphTests)
+    unittest.TextTestRunner().run(suite1)
 
 
 if __name__ == '__main__':
@@ -75,13 +78,15 @@ if __name__ == '__main__':
     # Parse arguments and run
     parsed_args = parser.parse_args()
 
-    run_on_single_file("store_buffer.ll")
-    # if parsed_args.compile_tests:
-    #     print("Compiling test programs...")
-    #     compile_tests()
-    # if parsed_args.run:
-    #     print("Inserting fences...")
-    #     run()
-    # if parsed_args.python_tests:
-    #     print("running python tests")
-    #     python_test()
+    
+    if parsed_args.compile_tests:
+        print("Compiling test programs...")
+        compile_tests()
+    elif parsed_args.run:
+        print("Inserting fences...")
+        run()
+    elif parsed_args.python_tests:
+        print("running python tests")
+        python_test()
+    else:
+        run_on_single_file("store_buffer.ll")

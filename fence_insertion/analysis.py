@@ -94,7 +94,12 @@ class ProgramAnalyser:
                         mem_access = local_accesses[ix]
                     instr_line_num = definition_line + line_num_offset
                     parsed_instr = Instruction.create_instruction(instr, instr_line_num, mem_access)
-                    self.parsed_instructions.append(parsed_instr)
+                    if type(parsed_instr) == Assignment and hasattr(parsed_instr, "recursive") and type(
+                            parsed_instr.recursive) == FunctionCall:
+                        self.parsed_instructions.append(parsed_instr.recursive)
+                        self.parsed_instructions.append(parsed_instr)
+                    else:
+                        self.parsed_instructions.append(parsed_instr)
         self.program_iterator = ProgramIterator(self.parsed_instructions)
 
     def construct_aeg(self):
@@ -132,6 +137,7 @@ class ProgramAnalyser:
 
             return self.construct_aeg_from_instruction(self.program_iterator.next(), evts2)
         elif instr_type == FunctionCall:
+            func_name = instr.function_name
             return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
         elif instr_type == Guard:
             return self.construct_aeg_from_instruction(self.program_iterator.next(), set())

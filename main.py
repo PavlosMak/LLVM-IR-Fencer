@@ -72,13 +72,13 @@ if __name__ == '__main__':
     # Parse arguments and run
     parsed_args = parser.parse_args()
 
-    # run_on_single_file("add.ll")
-    if parsed_args.compile_tests:
-        print("Compiling test programs...")
-        compile_tests()
-    if parsed_args.run:
-        print("Inserting fences...")
-        run()
-    if parsed_args.python_tests:
-        print("running python tests")
-        python_test()
+    run_on_single_file("add.ll")
+    # if parsed_args.compile_tests:
+    #     print("Compiling test programs...")
+    #     compile_tests()
+    # if parsed_args.run:
+    #     print("Inserting fences...")
+    #     run()
+    # if parsed_args.python_tests:
+    #     print("running python tests")
+    #     python_test()

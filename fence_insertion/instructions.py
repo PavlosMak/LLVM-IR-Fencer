@@ -85,6 +85,7 @@ class Assignment(Instruction):
         :param instr: The textual representation of the instruction.
         """
         super().__init__(program_point)
+        self.raw_string = instr
         split = instr.split(" = ")
         self.reads = set()
         self.writes = set()

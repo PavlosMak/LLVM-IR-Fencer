@@ -34,12 +34,23 @@ class ProgramIterator(object):
             self.finger += 1
             return cur
         return None
+    
+    # Function to jump to a certain line number if required
+    def jump(self, line_number):
+        for i in range(len(self.instructions)):
+            if self.instructions[i].program_point == line_number:
+                self.finger = i
+
+
+    def getLineNumber(self):
+        return self.finger  
 
 
 class ProgramAnalyser:
     def __init__(self, path_to_file: str, path_to_WPA: str, parse_as_bitcode=False):
         self.ir_txt = ""
         self.ir_lines = []
+        self.shared_vars = []
         # Perform points to analysis
         self.points_to_analyzer = SVF(path_to_WPA)
         self.mem_accesses = self.points_to_analyzer.run(path_to_file)
@@ -66,13 +77,20 @@ class ProgramAnalyser:
                     # We keep track of any function that is declared but not defined
                     func_name = parsed_line.code[parsed_line.code.index("@") + 1:parsed_line.code.index("(")]
                     self.declared_funcs.add(func_name)
-
+                elif parsed_line.code[0] == "@": 
+                    #we found a shared variable in the LLVM IR
+                    self.shared_vars.append(parsed_line.code.split(" ")[0])
         # Parse the code
         if not parse_as_bitcode:
             self.module = llvm.parse_assembly(self.ir_txt)
         else:
             self.module = llvm.parse_bitcode(self.ir_txt)
         # Initialize the graph
+        print(self.shared_vars)
+        print(self.labels)
+        print(self.declared_funcs)
+        print(self.function_lines)
+
         self.aeg = AbstractEventGraph()
         # Parse instructions and associate with memory analysis results
         self.parsed_instructions = list()
@@ -100,9 +118,12 @@ class ProgramAnalyser:
                         self.parsed_instructions.append(parsed_instr)
                     else:
                         self.parsed_instructions.append(parsed_instr)
+        print(self.parsed_instructions)
         self.program_iterator = ProgramIterator(self.parsed_instructions)
+        self.program_iterator.jump(self.function_lines['main']+1) #we want to start our analysis at main()
 
     def construct_aeg(self):
+        
         self.construct_aeg_from_instruction(self.program_iterator.next(), set())
 
     def construct_aeg_from_instruction(self, instr: Instruction, prev_evts: set):
@@ -110,32 +131,37 @@ class ProgramAnalyser:
         Incrementally creates the Abstract Event Graph, following the pseudocode
         of figure 15 in Alglave et al., 2014.
         """
+        
+
         # Base case
         if instr is None:
             return
+        
+        self.program_iterator.getLineNumber()
         instr_type = type(instr)
         if instr_type == Assignment:
-            read_locations = instr.reads
-            write_locations = instr.writes
-            # If there is a memory access associated add it to correct set
-            if instr.mem_access is not None:
-                if instr.mem_access.direction == MemAccessDirection.READ:
-                    read_locations.add(instr.mem_access.location)
+            str = instr.raw_string
+            if "@" in str:
+                var = str[str.find("@"):].split()[0]
+                if var[-1] == ",":
+                    var = var[:-1]
+                if var in self.shared_vars: #found actual shared var, so should be in the graph                    
+                    if "load" in str:
+                        events = [AbstractEvent(instr.program_point, MemAccessDirection.READ, mem_loc=var)]
+                        self.aeg.add_pos_edges(prev_evts, events)
+                        return self.construct_aeg_from_instruction(self.program_iterator.next(), events)
+                    elif "store" in str:
+                        events = [AbstractEvent(instr.program_point, MemAccessDirection.WRITE, mem_loc=var)]
+                        self.aeg.add_pos_edges(prev_evts, events)
+                        return self.construct_aeg_from_instruction(self.program_iterator.next(), events)
+                    else:
+                        print("error")
+                        exit()
                 else:
-                    write_locations.add(instr.mem_access.location)
-            # TODO: Resolve registers to addresses
-
-            # In contrast to the original paper we have only two sets of events because
-            # LLVM IR will not have reads in both sides of an assignment
-            evts1 = set(
-                [AbstractEvent(instr.program_point, MemAccessDirection.READ, mem_loc) for mem_loc in read_locations])
-            evts2 = set([AbstractEvent(instr.program_point, MemAccessDirection.WRITE, mem_loc) for mem_loc in
-                         write_locations])
-
-            self.aeg.add_pos_edges(prev_evts, evts1)
-            self.aeg.add_pos_edges(evts1, evts2)
-
-            return self.construct_aeg_from_instruction(self.program_iterator.next(), evts2)
+                    return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
+            else:
+                #no shared vars found, so move on to the next instruction
+                return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
         elif instr_type == FunctionCall:
             func_name = instr.function_name
             return self.construct_aeg_from_instruction(self.program_iterator.next(), set())

@@ -137,56 +137,31 @@ class ProgramAnalyser:
         if instr is None:
             return
         
-        # print(instr.program_point)
         self.program_iterator.getLineNumber()
         instr_type = type(instr)
         if instr_type == Assignment:
             str = instr.raw_string
-            # print(str)
             if "@" in str:
-                # print("found @")
                 var = str[str.find("@"):].split()[0]
                 if var[-1] == ",":
                     var = var[:-1]
-                # print(var)
                 if var in self.shared_vars: #found actual shared var, so should be in the graph                    
                     if "load" in str:
-                        # print("found load")
                         events = [AbstractEvent(instr.program_point, MemAccessDirection.READ, mem_loc=var)]
                         self.aeg.add_pos_edges(prev_evts, events)
                         return self.construct_aeg_from_instruction(self.program_iterator.next(), events)
                     elif "store" in str:
-                        # print("found store")
                         events = [AbstractEvent(instr.program_point, MemAccessDirection.WRITE, mem_loc=var)]
                         self.aeg.add_pos_edges(prev_evts, events)
                         return self.construct_aeg_from_instruction(self.program_iterator.next(), events)
                     else:
                         print("error")
+                        exit()
                 else:
                     return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
             else:
                 #no shared vars found, so move on to the next instruction
                 return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
-            # read_locations = instr.reads
-            # write_locations = instr.writes
-            # If there is a memory access associated add it to correct set
-            # if instr.mem_access is not None:
-            #     if instr.mem_access.direction == MemAccessDirection.READ:
-            #         read_locations.add(instr.mem_access.location)
-            #     else:
-            #         write_locations.add(instr.mem_access.location)
-
-            # # In contrast to the original paper we have only two sets of events because
-            # # LLVM IR will not have reads in both sides of an assignment
-            # evts2 = set(
-            #     [AbstractEvent(instr.program_point, MemAccessDirection.READ, mem_loc) for mem_loc in read_locations])
-            # evts3 = set([AbstractEvent(instr.program_point, MemAccessDirection.WRITE, mem_loc) for mem_loc in
-            #              write_locations])
-
-            # self.aeg.add_pos_edges(prev_evts, evts2)
-            # self.aeg.add_pos_edges(evts2, evts3)
-
-            # return self.construct_aeg_from_instruction(self.program_iterator.next(), evts3)
         elif instr_type == FunctionCall:
             func_name = instr.function_name
             return self.construct_aeg_from_instruction(self.program_iterator.next(), set())

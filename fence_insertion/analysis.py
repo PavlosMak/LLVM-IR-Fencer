@@ -34,12 +34,23 @@ class ProgramIterator(object):
             self.finger += 1
             return cur
         return None
+    
+    # Function to jump to a certain line number if required
+    def jump(self, line_number):
+        for i in range(len(self.instructions)):
+            if self.instructions[i].program_point == line_number:
+                self.finger = i
+
+
+    def getLineNumber(self):
+        return self.finger  
 
 
 class ProgramAnalyser:
     def __init__(self, path_to_file: str, path_to_WPA: str, parse_as_bitcode=False):
         self.ir_txt = ""
         self.ir_lines = []
+        self.shared_vars = []
         # Perform points to analysis
         self.points_to_analyzer = SVF(path_to_WPA)
         self.mem_accesses = self.points_to_analyzer.run(path_to_file)
@@ -66,13 +77,20 @@ class ProgramAnalyser:
                     # We keep track of any function that is declared but not defined
                     func_name = parsed_line.code[parsed_line.code.index("@") + 1:parsed_line.code.index("(")]
                     self.declared_funcs.add(func_name)
-
+                elif parsed_line.code[0] == "@": 
+                    #we found a shared variable in the LLVM IR
+                    self.shared_vars.append(parsed_line.code.split(" ")[0])
         # Parse the code
         if not parse_as_bitcode:
             self.module = llvm.parse_assembly(self.ir_txt)
         else:
             self.module = llvm.parse_bitcode(self.ir_txt)
         # Initialize the graph
+        print(self.shared_vars)
+        print(self.labels)
+        print(self.declared_funcs)
+        print(self.function_lines)
+
         self.aeg = AbstractEventGraph()
         # Parse instructions and associate with memory analysis results
         self.parsed_instructions = list()
@@ -100,9 +118,13 @@ class ProgramAnalyser:
                         self.parsed_instructions.append(parsed_instr)
                     else:
                         self.parsed_instructions.append(parsed_instr)
+        print(self.parsed_instructions)
         self.program_iterator = ProgramIterator(self.parsed_instructions)
+        print("test jump " +str(self.function_lines['main']+1))
+        self.program_iterator.jump(self.function_lines['main']+1)
 
     def construct_aeg(self):
+        
         self.construct_aeg_from_instruction(self.program_iterator.next(), set())
 
     def construct_aeg_from_instruction(self, instr: Instruction, prev_evts: set):
@@ -110,9 +132,14 @@ class ProgramAnalyser:
         Incrementally creates the Abstract Event Graph, following the pseudocode
         of figure 15 in Alglave et al., 2014.
         """
+        
+
         # Base case
         if instr is None:
             return
+        
+        print(instr.program_point)
+        self.program_iterator.getLineNumber()
         instr_type = type(instr)
         if instr_type == Assignment:
             read_locations = instr.reads

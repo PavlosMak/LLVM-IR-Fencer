@@ -89,4 +89,4 @@ if __name__ == '__main__':
         print("running python tests")
         python_test()
     else:
-        run_on_single_file("function_call.ll")
+        run_on_single_file("store_buffer.ll")

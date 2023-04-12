@@ -150,7 +150,8 @@ class ProgramAnalyser:
         # Base case
         if instr is None:
             return
-        
+        print(instr)
+        print(instr.raw_string)
         self.program_iterator.getLineNumber()
         instr_type = type(instr)
         if instr_type == Assignment:
@@ -172,12 +173,18 @@ class ProgramAnalyser:
                         print("error")
                         exit()
                 else:
+                    if "pthread_create":
+                        print("thread_create")
+                        pass
+                    if "pthread_join":
+                        print("thread_join")
+                        pass
                     return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
             else:
                 #no shared vars found, so move on to the next instruction
                 return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
         elif instr_type == FunctionCall:
-            # print("found function")
+            print("found function")
             # print(instr.raw_string)
             str = instr.raw_string
             if "@" in str:
@@ -192,7 +199,7 @@ class ProgramAnalyser:
                     #jump to the new function so we can search for shared vars there
                     self.program_iterator.jump(self.function_lines[func]+1)
                     return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
-                    pass
+                    
                 else: 
                     #function is some type of call, for example a print function
                     #since it is not something we should handle, we just try to go to the next instruction
@@ -213,8 +220,10 @@ class ProgramAnalyser:
         elif instr_type == AtomicSection:
             return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
         elif instr_type == NewThread:
+            print("found new thread")
             return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
         elif instr_type == EndThread:
+            print("found end thread")
             return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
         else:
             # print(instr.raw_string)

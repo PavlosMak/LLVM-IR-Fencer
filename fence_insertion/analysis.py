@@ -137,26 +137,29 @@ class ProgramAnalyser:
         if instr is None:
             return
         
-        print(instr.program_point)
+        # print(instr.program_point)
         self.program_iterator.getLineNumber()
         instr_type = type(instr)
         if instr_type == Assignment:
             str = instr.raw_string
-            print(str)
+            # print(str)
             if "@" in str:
-                print("found @")
-                var = str[str.find("@")+1:].split()[0]
-                if var in self.shared_vars: #found actual shared var, so should be in the graph
+                # print("found @")
+                var = str[str.find("@"):].split()[0]
+                if var[-1] == ",":
+                    var = var[:-1]
+                # print(var)
+                if var in self.shared_vars: #found actual shared var, so should be in the graph                    
                     if "load" in str:
-                        print("found load")
-                        event = AbstractEvent(instr.program_point, MemAccessDirection.READ, mem_loc=var)
-                        self.aeg.add_pos_edges(prev_evts, event)
-                        return self.construct_aeg_from_instruction(self.program_iterator.next(), event)
+                        # print("found load")
+                        events = [AbstractEvent(instr.program_point, MemAccessDirection.READ, mem_loc=var)]
+                        self.aeg.add_pos_edges(prev_evts, events)
+                        return self.construct_aeg_from_instruction(self.program_iterator.next(), events)
                     elif "store" in str:
-                        print("found store")
-                        event = AbstractEvent(instr.program_point, MemAccessDirection.WRITE, mem_loc=var)
-                        self.aeg.add_pos_edges(prev_evts, event)
-                        return self.construct_aeg_from_instruction(self.program_iterator.next(), event)
+                        # print("found store")
+                        events = [AbstractEvent(instr.program_point, MemAccessDirection.WRITE, mem_loc=var)]
+                        self.aeg.add_pos_edges(prev_evts, events)
+                        return self.construct_aeg_from_instruction(self.program_iterator.next(), events)
                     else:
                         print("error")
                 else:

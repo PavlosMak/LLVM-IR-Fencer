@@ -118,7 +118,6 @@ class ProgramAnalyser:
                         self.parsed_instructions.append(parsed_instr)
                     else:
                         self.parsed_instructions.append(parsed_instr)
-        print(self.parsed_instructions)
         self.program_iterator = ProgramIterator(self.parsed_instructions)
         self.program_iterator.jump(self.function_lines['main']+1) #we want to start our analysis at main()
 

@@ -120,8 +120,7 @@ class ProgramAnalyser:
                         self.parsed_instructions.append(parsed_instr)
         print(self.parsed_instructions)
         self.program_iterator = ProgramIterator(self.parsed_instructions)
-        print("test jump " +str(self.function_lines['main']+1))
-        self.program_iterator.jump(self.function_lines['main']+1)
+        self.program_iterator.jump(self.function_lines['main']+1) #we want to start our analysis at main()
 
     def construct_aeg(self):
         
@@ -142,27 +141,49 @@ class ProgramAnalyser:
         self.program_iterator.getLineNumber()
         instr_type = type(instr)
         if instr_type == Assignment:
-            read_locations = instr.reads
-            write_locations = instr.writes
-            # If there is a memory access associated add it to correct set
-            if instr.mem_access is not None:
-                if instr.mem_access.direction == MemAccessDirection.READ:
-                    read_locations.add(instr.mem_access.location)
+            str = instr.raw_string
+            print(str)
+            if "@" in str:
+                print("found @")
+                var = str[str.find("@")+1:].split()[0]
+                if var in self.shared_vars: #found actual shared var, so should be in the graph
+                    if "load" in str:
+                        print("found load")
+                        event = AbstractEvent(instr.program_point, MemAccessDirection.READ, mem_loc=var)
+                        self.aeg.add_pos_edges(prev_evts, event)
+                        return self.construct_aeg_from_instruction(self.program_iterator.next(), event)
+                    elif "store" in str:
+                        print("found store")
+                        event = AbstractEvent(instr.program_point, MemAccessDirection.WRITE, mem_loc=var)
+                        self.aeg.add_pos_edges(prev_evts, event)
+                        return self.construct_aeg_from_instruction(self.program_iterator.next(), event)
+                    else:
+                        print("error")
                 else:
-                    write_locations.add(instr.mem_access.location)
-            # TODO: Resolve registers to addresses
+                    return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
+            else:
+                #no shared vars found, so move on to the next instruction
+                return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
+            # read_locations = instr.reads
+            # write_locations = instr.writes
+            # If there is a memory access associated add it to correct set
+            # if instr.mem_access is not None:
+            #     if instr.mem_access.direction == MemAccessDirection.READ:
+            #         read_locations.add(instr.mem_access.location)
+            #     else:
+            #         write_locations.add(instr.mem_access.location)
 
-            # In contrast to the original paper we have only two sets of events because
-            # LLVM IR will not have reads in both sides of an assignment
-            evts2 = set(
-                [AbstractEvent(instr.program_point, MemAccessDirection.READ, mem_loc) for mem_loc in read_locations])
-            evts3 = set([AbstractEvent(instr.program_point, MemAccessDirection.WRITE, mem_loc) for mem_loc in
-                         write_locations])
+            # # In contrast to the original paper we have only two sets of events because
+            # # LLVM IR will not have reads in both sides of an assignment
+            # evts2 = set(
+            #     [AbstractEvent(instr.program_point, MemAccessDirection.READ, mem_loc) for mem_loc in read_locations])
+            # evts3 = set([AbstractEvent(instr.program_point, MemAccessDirection.WRITE, mem_loc) for mem_loc in
+            #              write_locations])
 
-            self.aeg.add_pos_edges(prev_evts, evts2)
-            self.aeg.add_pos_edges(evts2, evts3)
+            # self.aeg.add_pos_edges(prev_evts, evts2)
+            # self.aeg.add_pos_edges(evts2, evts3)
 
-            return self.construct_aeg_from_instruction(self.program_iterator.next(), evts3)
+            # return self.construct_aeg_from_instruction(self.program_iterator.next(), evts3)
         elif instr_type == FunctionCall:
             func_name = instr.function_name
             return self.construct_aeg_from_instruction(self.program_iterator.next(), set())

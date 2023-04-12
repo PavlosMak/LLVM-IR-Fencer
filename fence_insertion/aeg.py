@@ -59,6 +59,10 @@ class AbstractEventGraph:
         if from_node not in self.edges:
             self.add_node(from_node)
         self.edges[from_node].append(to_node)
+        print(from_node.abstract_event.direction)
+        print(from_node.abstract_event.memory_loc)
+        print(to_node.abstract_event.direction)
+        print(to_node.abstract_event.memory_loc)
 
     def add_pos_edges(self, events1: set, events2: set):
         """

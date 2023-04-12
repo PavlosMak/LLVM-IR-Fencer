@@ -232,3 +232,4 @@ class OtherInstruction(Instruction):
         :param instr: The textual representation of the instruction.
         """
         super().__init__(program_point)
+        self.raw_string = instr

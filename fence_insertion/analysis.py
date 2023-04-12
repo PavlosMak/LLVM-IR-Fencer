@@ -15,6 +15,7 @@ class ProgramIterator(object):
     def __init__(self, instructions: list):
         self.instructions = instructions
         self.finger = 0
+        self.stacking = []
 
     def __iter__(self):
         return self
@@ -44,6 +45,13 @@ class ProgramIterator(object):
 
     def getLineNumber(self):
         return self.finger  
+    
+    def stack(self, line_number):
+        self.stacking.append(line_number)
+
+    def unstack(self):
+        return self.stacking.pop()
+        
 
 
 class ProgramAnalyser:
@@ -175,6 +183,9 @@ class ProgramAnalyser:
                     #function is defined within the file
                     print("function declared in file")
                     #TODO: add a way we insert the body into the iterator
+                    pass
+                else: 
+                    #function is some type of call, for example a thread_create or a print function
                     pass
 
             return self.construct_aeg_from_instruction(self.program_iterator.next(), set())

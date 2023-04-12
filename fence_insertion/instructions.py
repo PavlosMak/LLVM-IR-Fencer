@@ -114,6 +114,7 @@ class FunctionCall(Instruction):
         :param instr: The textual representation of the instruction.
         """
         super().__init__(program_point)
+        self.raw_string = instr
         split = instr.split("@")
         function_call = split[1]  # full function call
 

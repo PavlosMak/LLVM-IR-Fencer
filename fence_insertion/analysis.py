@@ -162,7 +162,21 @@ class ProgramAnalyser:
                 #no shared vars found, so move on to the next instruction
                 return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
         elif instr_type == FunctionCall:
-            func_name = instr.function_name
+            print("found function")
+            print(instr.raw_string)
+            str = instr.raw_string
+            if "@" in str:
+                func = str[str.find("@")+1:].split()[0]
+                pos_bracket = func.find("(")
+                func = func[:pos_bracket]
+                print(pos_bracket)
+                print(func)
+                if func in self.function_lines:
+                    #function is defined within the file
+                    print("function declared in file")
+                    #TODO: add a way we insert the body into the iterator
+                    pass
+
             return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
         elif instr_type == Guard:
             return self.construct_aeg_from_instruction(self.program_iterator.next(), set())

@@ -35,7 +35,7 @@ class ProgramIterator(object):
             self.finger += 1
             return cur
         return None
-    
+
     # Function to jump to a certain line number if required
     def jump(self, line_number: int):
         succesful_jump = False
@@ -48,8 +48,8 @@ class ProgramIterator(object):
             print("jump failed: " + str(line_number))
 
     def getLineNumber(self):
-        return self.finger  
-    
+        return self.finger
+
     def stack(self, line_number):
         self.stacking.append(line_number)
 
@@ -57,7 +57,6 @@ class ProgramIterator(object):
         if len(self.stacking) == 0:
             return None
         return self.stacking.pop()
-        
 
 
 class ProgramAnalyser:
@@ -91,8 +90,8 @@ class ProgramAnalyser:
                     # We keep track of any function that is declared but not defined
                     func_name = parsed_line.code[parsed_line.code.index("@") + 1:parsed_line.code.index("(")]
                     self.declared_funcs.add(func_name)
-                elif parsed_line.code[0] == "@": 
-                    #we found a shared variable in the LLVM IR
+                elif parsed_line.code[0] == "@":
+                    # we found a shared variable in the LLVM IR
                     self.shared_vars.append(parsed_line.code.split(" ")[0])
         # Parse the code
         if not parse_as_bitcode:
@@ -108,6 +107,9 @@ class ProgramAnalyser:
         self.aeg = AbstractEventGraph()
         # Parse instructions and associate with memory analysis results
         self.parsed_instructions = list()
+
+        # This holds code iterators for all functions (useful for the thread analysis)
+        self.iterators = dict()
         for func in self.module.functions:
             # Check that we have the memory access for that function
             # this is important in cases where the function is called but not defined in the same file
@@ -116,6 +118,7 @@ class ProgramAnalyser:
             local_accesses = self.mem_accesses[func.name]
             definition_line = self.function_lines[func.name]
             line_num_offset = 0
+            function_instructions = []
             for block in func.blocks:
                 for instr in block.instructions:
                     line_num_offset += 1
@@ -130,23 +133,28 @@ class ProgramAnalyser:
                             parsed_instr.recursive) == FunctionCall:
                         self.parsed_instructions.append(parsed_instr.recursive)
                         self.parsed_instructions.append(parsed_instr)
+
+                        function_instructions.append(parsed_instr.recursive)
+                        function_instructions.append(parsed_instr)
                     else:
                         self.parsed_instructions.append(parsed_instr)
+                        function_instructions.append(parsed_instr)
+            self.iterators.update({func.name: ProgramIterator(function_instructions)})
         self.program_iterator = ProgramIterator(self.parsed_instructions)
 
-        self.program_iterator.jump(self.function_lines['main']+1) #we want to start our analysis at main()
+        self.program_iterator.jump(self.function_lines['main'] + 1)  # we want to start our analysis at main()
 
     def construct_aeg(self):
-        
-        self.construct_aeg_from_instruction(self.program_iterator.next(), set())
+        self.construct_aeg_from_instruction(self.program_iterator, set())
+        # self.construct_aeg_from_instruction(self.program_iterator.next(), set())
 
-    def construct_aeg_from_instruction(self, instr: Instruction, prev_evts: set):
+    def construct_aeg_from_instruction(self, iterator: ProgramIterator, prev_evts: set):
         """
         Incrementally creates the Abstract Event Graph, following the pseudocode
         of figure 15 in Alglave et al., 2014.
         """
-        
 
+        instr = iterator.next()
         # Base case
         if instr is None:
             return
@@ -160,84 +168,86 @@ class ProgramAnalyser:
                 var = str[str.find("@"):].split()[0]
                 if var[-1] == ",":
                     var = var[:-1]
-                if var in self.shared_vars: #found actual shared var, so should be in the graph                    
+                if var in self.shared_vars:  # found actual shared var, so should be in the graph
                     if "load" in str:
                         events = [AbstractEvent(instr.program_point, MemAccessDirection.READ, mem_loc=var)]
                         self.aeg.add_pos_edges(prev_evts, events)
-                        return self.construct_aeg_from_instruction(self.program_iterator.next(), events)
+                        return self.construct_aeg_from_instruction(iterator, events)
                     elif "store" in str:
                         events = [AbstractEvent(instr.program_point, MemAccessDirection.WRITE, mem_loc=var)]
                         self.aeg.add_pos_edges(prev_evts, events)
-                        return self.construct_aeg_from_instruction(self.program_iterator.next(), events)
+                        return self.construct_aeg_from_instruction(iterator, events)
                     else:
                         print("error")
                         exit()
                 else:
                     if "pthread_create":
                         print("thread_create")
-                        pass
-                    if "pthread_join":
-                        print("thread_join")
-                        pass
-                    return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
+                        thread_name = ""
+                        # TODO: Extract in helper
+                        # Get the function name from the thread and use that iterator to create the program
+                        for func in self.function_lines.keys():
+                            if func in instr.raw_string:
+                                self.construct_aeg_from_instruction(self.iterators[func], prev_evts)
+                        return self.construct_aeg_from_instruction(iterator, prev_evts)
+                    return self.construct_aeg_from_instruction(iterator, prev_evts)
             else:
-                #no shared vars found, so move on to the next instruction
-                return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
+                # no shared vars found, so move on to the next instruction
+                return self.construct_aeg_from_instruction(iterator, prev_evts)
         elif instr_type == FunctionCall:
             print("found function")
             # print(instr.raw_string)
             str = instr.raw_string
             if "@" in str:
-                func = str[str.find("@")+1:].split()[0]
+                func = str[str.find("@") + 1:].split()[0]
                 pos_bracket = func.find("(")
                 func = func[:pos_bracket]
                 if func in self.function_lines:
-                    #function is defined within the file
-                    #insert the location where we were onto a stack, so we can return to it after a ret instruction.
-                    self.program_iterator.stack(instr.program_point+1)
+                    # function is defined within the file
+                    # insert the location where we were onto a stack, so we can return to it after a ret instruction.
+                    self.program_iterator.stack(instr.program_point + 1)
                     # print(self.program_iterator.stacking)
-                    #jump to the new function so we can search for shared vars there
-                    self.program_iterator.jump(self.function_lines[func]+1)
-                    return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
-                    
-                else: 
-                    #function is some type of call, for example a print function
-                    #since it is not something we should handle, we just try to go to the next instruction
-                    return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
-                    
+                    # jump to the new function so we can search for shared vars there
+                    self.program_iterator.jump(self.function_lines[func] + 1)
+                    return self.construct_aeg_from_instruction(iterator, prev_evts)
 
-            return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
+                else:
+                    # function is some type of call, for example a print function
+                    # since it is not something we should handle, we just try to go to the next instruction
+                    return self.construct_aeg_from_instruction(iterator, prev_evts)
+
+            return self.construct_aeg_from_instruction(iterator, set())
         elif instr_type == Guard:
-            return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
+            return self.construct_aeg_from_instruction(iterator, set())
         elif instr_type == UnconditionalForwardJmp:
-            return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
+            return self.construct_aeg_from_instruction(iterator, set())
         elif instr_type == ConditionalBackwardJmp:
-            return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
+            return self.construct_aeg_from_instruction(iterator, set())
         elif instr_type == Jmp:
-            return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
+            return self.construct_aeg_from_instruction(iterator, set())
         elif instr_type == AssumeAssertSkip:
-            return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
+            return self.construct_aeg_from_instruction(iterator, set())
         elif instr_type == AtomicSection:
-            return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
+            return self.construct_aeg_from_instruction(iterator, set())
         elif instr_type == NewThread:
             print("found new thread")
-            return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
+            return self.construct_aeg_from_instruction(iterator, set())
         elif instr_type == EndThread:
             print("found end thread")
-            return self.construct_aeg_from_instruction(self.program_iterator.next(), set())
+            return self.construct_aeg_from_instruction(iterator, set())
         else:
             # print(instr.raw_string)
             # print("at line ")
             # print(instr.program_point)
-            
+
             if "ret" in instr.raw_string:
                 # print("found return function")
                 new_instr = self.program_iterator.unstack()
                 if new_instr == None:
-                    #should be at the end of main, so this is the end of the program
+                    # should be at the end of main, so this is the end of the program
                     return
                 self.program_iterator.jump(new_instr)
-            return self.construct_aeg_from_instruction(self.program_iterator.next(), prev_evts)
+            return self.construct_aeg_from_instruction(iterator, prev_evts)
 
     def get_aeg(self) -> AbstractEventGraph:
         """

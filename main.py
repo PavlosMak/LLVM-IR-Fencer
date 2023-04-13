@@ -47,7 +47,7 @@ def run_on_single_file(filename: str):
     os.chdir("test_programs")
     analyser = ProgramAnalyser(filename, WPA_PATH)
     aeg = analyser.get_aeg()
-    inserter = FenceInserter(aeg)
+    # inserter = FenceInserter(aeg)
     cycles = aeg.tarjan()
     os.chdir(parent_dir)
 
@@ -67,7 +67,7 @@ def compile_tests():
 def python_test():
     suite = unittest.defaultTestLoader.loadTestsFromTestCase(tests.instruction_tests.AssignmentTests)
     unittest.TextTestRunner().run(suite)
-    suite1= unittest.defaultTestLoader.loadTestsFromTestCase(tests.aeg_tests.AbstractEventGraphTests)
+    suite1 = unittest.defaultTestLoader.loadTestsFromTestCase(tests.aeg_tests.AbstractEventGraphTests)
     unittest.TextTestRunner().run(suite1)
 
 
@@ -78,7 +78,6 @@ if __name__ == '__main__':
     # Parse arguments and run
     parsed_args = parser.parse_args()
 
-    
     if parsed_args.compile_tests:
         print("Compiling test programs...")
         compile_tests()

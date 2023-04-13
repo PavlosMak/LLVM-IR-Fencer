@@ -64,6 +64,10 @@ class AbstractEventGraph:
         print(to_node.abstract_event.direction)
         print(to_node.abstract_event.memory_loc)
 
+    def add_cmp_edge(self, from_node: AbstractEventGraphNode, to_node: AbstractEventGraphNode):
+        self.add_edge(from_node, to_node)
+        self.add_edge(to_node, from_node)
+
     def add_pos_edges(self, events1: set, events2: set):
         """
         Adds edges between the abstract events in the events1 set

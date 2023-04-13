@@ -18,6 +18,12 @@ class AbstractEvent:
     def __hash__(self):
         return hash((self.program_point, self.direction))
 
+    def __repr__(self):
+        return f"AbstractEvent({self.program_point}, {self.direction}, {self.memory_loc})"
+
+    def __str__(self):
+        return self.__repr__()
+
 
 class AbstractEventGraphNode:
     def __init__(self, abstract_event: AbstractEvent, id: int):
@@ -26,6 +32,12 @@ class AbstractEventGraphNode:
 
     def __hash__(self):
         return self.id
+
+    def __repr__(self):
+        return f"AbstractEventGraphNode({self.id}, {self.abstract_event})"
+
+    def __str__(self):
+        return self.__repr__()
 
 
 class AbstractEventGraph:
@@ -36,6 +48,7 @@ class AbstractEventGraph:
         self.cycles = list()
         self.vertexCount = 0
         self.recorded_events = dict()
+        self.delays = []  # list of tuples representing a `delay` edge
 
     def record_event(self, abstract_event: AbstractEvent) -> AbstractEventGraphNode:
         """
@@ -55,18 +68,21 @@ class AbstractEventGraph:
         self.vertexCount += 1
         self.edges.update({node: list()})
 
-    def add_edge(self, from_node: AbstractEventGraphNode, to_node: AbstractEventGraphNode):
+    def add_edge(self, from_node: AbstractEventGraphNode, to_node: AbstractEventGraphNode, is_po: bool = True):
         if from_node not in self.edges:
             self.add_node(from_node)
         self.edges[from_node].append(to_node)
+        # Check if the edge is a delay as defined in figure 7 for x86
+        if is_po and from_node.abstract_event.direction == MemAccessDirection.WRITE and to_node.abstract_event.direction == MemAccessDirection.READ:
+            self.delays.append((from_node, to_node))
         print(from_node.abstract_event.direction)
         print(from_node.abstract_event.memory_loc)
         print(to_node.abstract_event.direction)
         print(to_node.abstract_event.memory_loc)
 
     def add_cmp_edge(self, from_node: AbstractEventGraphNode, to_node: AbstractEventGraphNode):
-        self.add_edge(from_node, to_node)
-        self.add_edge(to_node, from_node)
+        self.add_edge(from_node, to_node, is_po=False)
+        self.add_edge(to_node, from_node, is_po=False)
 
     def add_pos_edges(self, events1: set, events2: set):
         """

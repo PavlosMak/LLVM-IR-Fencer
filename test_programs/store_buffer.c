@@ -7,15 +7,14 @@ int y = 0;  // shared variable
 void* thread1(void* arg) {
     x = 1;
 //    __sync_synchronize();  // store barrier
-    y = 1;
+    int r1 = y;
     return NULL;
 }
 
 void* thread2(void* arg) {
-    int r1 = y;
+    y = 1;
 //    __sync_synchronize();  // load barrier
     int r2 = x;
-    printf("r1 = %d, r2 = %d\n", r1, r2);
     return NULL;
 }
 

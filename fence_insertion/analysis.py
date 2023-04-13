@@ -36,6 +36,9 @@ class ProgramIterator(object):
             return cur
         return None
 
+    def reset(self):
+        self.finger = 0
+
     # Function to jump to a certain line number if required
     def jump(self, line_number: int):
         succesful_jump = False
@@ -141,11 +144,22 @@ class ProgramAnalyser:
                         function_instructions.append(parsed_instr)
             self.iterators.update({func.name: ProgramIterator(function_instructions)})
         self.program_iterator = ProgramIterator(self.parsed_instructions)
-
         self.program_iterator.jump(self.function_lines['main'] + 1)  # we want to start our analysis at main()
+
+        # This will hold function names to threads
+        self.threads = dict()
+
+    def add_cmp_edges(self):
+        events = list(self.aeg.edges.keys())
+        writes = [e for e in events if e.abstract_event.direction == MemAccessDirection.WRITE]
+        for write in writes:
+            for event in events:
+                if event.abstract_event.memory_loc == write.abstract_event.memory_loc and event != write:
+                    self.aeg.add_cmp_edge(write, event)
 
     def construct_aeg(self):
         self.construct_aeg_from_instruction(self.program_iterator, set())
+        self.add_cmp_edges()
         # self.construct_aeg_from_instruction(self.program_iterator.next(), set())
 
     def construct_aeg_from_instruction(self, iterator: ProgramIterator, prev_evts: set):
@@ -181,7 +195,7 @@ class ProgramAnalyser:
                         print("error")
                         exit()
                 else:
-                    if "pthread_create":
+                    if "pthread_create" in str:
                         print("thread_create")
                         thread_name = ""
                         # TODO: Extract in helper
@@ -189,6 +203,8 @@ class ProgramAnalyser:
                         for func in self.function_lines.keys():
                             if func in instr.raw_string:
                                 self.construct_aeg_from_instruction(self.iterators[func], prev_evts)
+                                # Register the thread
+                                self.threads.update({func: []})
                         return self.construct_aeg_from_instruction(iterator, prev_evts)
                     return self.construct_aeg_from_instruction(iterator, prev_evts)
             else:

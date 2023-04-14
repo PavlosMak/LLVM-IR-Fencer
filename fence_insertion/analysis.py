@@ -3,6 +3,7 @@ from fence_insertion.aeg import AbstractEventGraph
 from fence_insertion.instructions import *
 from fence_insertion.pointer_analysis import MemAccessDirection
 from fence_insertion.pointer_analysis import SVF
+import re
 
 
 class ProgramIterator(object):
@@ -98,7 +99,7 @@ class ProgramAnalyser:
                     # we found a shared variable in the LLVM IR
                     self.shared_vars.append(parsed_line.code.split(" ")[0])
                 if "define" not in parsed_line.code and "declare" not in parsed_line.code and curr_func != "":
-                    self.line_numbers[curr_func].update({str(parsed_line).strip(): line_number})
+                    self.line_numbers[curr_func].update({self._process_string(str(parsed_line)).strip(): line_number})
         # Parse the code
         if not parse_as_bitcode:
             self.module = llvm.parse_assembly(self.ir_txt)
@@ -126,6 +127,8 @@ class ProgramAnalyser:
                     if txt_instr in local_accesses:
                         ix = local_accesses.index(txt_instr)
                         mem_access = local_accesses[ix]
+                    if txt_instr not in self.line_numbers[func.name]:
+                        print(txt_instr)
                     instr_line_num = self.line_numbers[func.name][txt_instr]
                     parsed_instr = Instruction.create_instruction(instr, instr_line_num, mem_access)
                     if type(parsed_instr) == Assignment and hasattr(parsed_instr, "recursive") and type(
@@ -250,7 +253,9 @@ class ProgramAnalyser:
             else:
                 # unconditional jmp
                 label = instr.raw_string[instr.raw_string.index("%") + 1:]
-                iterator.jump(self.labels[label])
+                iterator.jump(
+                self.labels[self._process_string(label)]
+                )
                 return self.construct_aeg_from_instruction(iterator, prev_evts)
         elif instr_type == AssumeAssertSkip:
             return self.construct_aeg_from_instruction(iterator, set())
@@ -278,4 +283,8 @@ class ProgramAnalyser:
         return self.aeg
 
     def _process_string(self, string: str):
-        return string.strip().replace(".0", "")
+        res = string.strip()
+        res = re.sub(r"\.\d+", "", res)
+        if ", !llvm.loop" in res:
+            res = res[0:res.index(", !llvm")]
+        return res

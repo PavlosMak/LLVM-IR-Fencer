@@ -38,6 +38,7 @@ def run():
                 inserter.insert_fences()
                 inserter.export("fenced_" + file)
                 print("\t--Done!")
+                print(f"\t--Inserted: {inserter.fences_inserted} fences")
         os.chdir(parent_dir)
 
 
@@ -90,4 +91,4 @@ if __name__ == '__main__':
         print("running python tests")
         python_test()
     else:
-        run_on_single_file("paper_example.ll")
+        run_on_single_file("peterson.ll")

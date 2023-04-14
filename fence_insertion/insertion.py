@@ -13,6 +13,7 @@ class FenceInserter:
         self.aeg = aeg
         self.program = program
         self.solver = cp_model.CpSolver()
+        self.fences_inserted = 0
         if not self.solver:
             raise RuntimeError("Could not create solver")
 
@@ -42,6 +43,7 @@ class FenceInserter:
         for index, tl in enumerate(tls):
             if self.solver.Value(tl) == 1:
                 po_edge = self.aeg.po_edges[index]
+                self.fences_inserted += 1
                 lines_to_be_fenced.append(
                     po_edge[1].abstract_event.program_point - 1)  # subtract 1 since we want the index
         return lines_to_be_fenced

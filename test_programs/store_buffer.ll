@@ -7,15 +7,19 @@ target triple = "x86_64-pc-linux-gnu"
 
 @x = dso_local global i32 0, align 4
 @y = dso_local global i32 0, align 4
+@z = dso_local global i32 0, align 4
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local i8* @thread1(i8* %0) #0 {
   %2 = alloca i8*, align 8
   %3 = alloca i32, align 4
+  %4 = alloca i32, align 4
   store i8* %0, i8** %2, align 8
   store i32 1, i32* @x, align 4
-  %4 = load i32, i32* @y, align 4
-  store i32 %4, i32* %3, align 4
+  %5 = load i32, i32* @y, align 4
+  store i32 %5, i32* %3, align 4
+  %6 = load i32, i32* @z, align 4
+  store i32 %6, i32* %4, align 4
   ret i8* null
 }
 

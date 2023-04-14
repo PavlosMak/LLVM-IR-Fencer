@@ -44,6 +44,7 @@ class AbstractEventGraph:
 
     def __init__(self):
         self.edges = dict()  # Here we will store the adjacency list
+        self.po_edges = []  # List of tuples to hold all pos edges. Useful for ILP
         self.time = 0
         self.cycles = list()
         self.vertexCount = 0
@@ -75,6 +76,8 @@ class AbstractEventGraph:
         # Check if the edge is a delay as defined in figure 7 for x86
         if is_po and from_node.abstract_event.direction == MemAccessDirection.WRITE and to_node.abstract_event.direction == MemAccessDirection.READ:
             self.delays.append((from_node, to_node))
+        if is_po:
+            self.po_edges.append((from_node, to_node))
         print(from_node.abstract_event.direction)
         print(from_node.abstract_event.memory_loc)
         print(to_node.abstract_event.direction)

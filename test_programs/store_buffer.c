@@ -3,11 +3,13 @@
 
 int x = 0;  // shared variable
 int y = 0;  // shared variable
+int z = 0; // shared variable
 
 void* thread1(void* arg) {
     x = 1;
 //    __sync_synchronize();  // store barrier
     int r1 = y;
+    int r3 = z;
     return NULL;
 }
 

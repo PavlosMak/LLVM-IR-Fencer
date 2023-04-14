@@ -1,3 +1,7 @@
+/**
+Example taken from figure 9 of Alglave et. al 2014
+**/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -10,7 +14,7 @@ void* thread1(void* arg) {
     int r1;
     x = 3;
     if (rand() % 2) {
-        int temp2 = 3;
+        y = 3;
     } else {
         z = 2;
     }

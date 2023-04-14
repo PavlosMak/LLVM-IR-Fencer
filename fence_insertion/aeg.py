@@ -78,11 +78,7 @@ class AbstractEventGraph:
             self.delays.append((from_node, to_node))
         if is_po:
             self.po_edges.append((from_node, to_node))
-        print(from_node.abstract_event.direction)
-        print(from_node.abstract_event.memory_loc)
-        print(to_node.abstract_event.direction)
-        print(to_node.abstract_event.memory_loc)
-
+            
     def add_cmp_edge(self, from_node: AbstractEventGraphNode, to_node: AbstractEventGraphNode):
         self.add_edge(from_node, to_node, is_po=False)
         self.add_edge(to_node, from_node, is_po=False)

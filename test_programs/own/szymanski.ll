@@ -1,72 +1,69 @@
-; ModuleID = 'test.c'
-source_filename = "test.c"
+; ModuleID = 'szymanski.c'
+source_filename = "szymanski.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
 %union.pthread_attr_t = type { i64, [48 x i8] }
 
-@x = dso_local global i32 0, align 4
-@y = dso_local global i32 0, align 4
-@z = dso_local global i32 0, align 4
+@flag1 = dso_local global i32 0, align 4
+@flag2 = dso_local global i32 0, align 4
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i8* @thread1(i8* %0) #0 {
+define dso_local i8* @thr1(i8* %0) #0 {
   %2 = alloca i8*, align 8
-  %3 = alloca i32, align 4
-  %4 = alloca i32, align 4
-  %5 = alloca i32, align 4
   store i8* %0, i8** %2, align 8
-  store i32 3, i32* @x, align 4
-  %6 = call i32 @rand() #3
-  %7 = srem i32 %6, 2
-  %8 = icmp ne i32 %7, 0
-  br i1 %8, label %9, label %10
+  br label %3
 
-9:                                                ; preds = %1
-  store i32 3, i32* %4, align 4
-  br label %11
+3:                                                ; preds = %1, %7
+  store i32 1, i32* @flag1, align 4
+  store i32 3, i32* @flag1, align 4
+  %4 = load i32, i32* @flag2, align 4
+  %5 = icmp eq i32 %4, 1
+  br i1 %5, label %6, label %7
 
-10:                                               ; preds = %1
-  store i32 2, i32* @z, align 4
-  br label %11
+6:                                                ; preds = %3
+  store i32 2, i32* @flag1, align 4
+  br label %7
 
-11:                                               ; preds = %10, %9
-  %12 = load i32, i32* @x, align 4
-  store i32 %12, i32* %5, align 4
-  ret i8* null
+7:                                                ; preds = %6, %3
+  store i32 4, i32* @flag1, align 4
+  store i32 0, i32* @flag1, align 4
+  br label %3
 }
 
-; Function Attrs: nounwind
-declare dso_local i32 @rand() #1
-
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i8* @thread2(i8* %0) #0 {
+define dso_local i8* @thr2(i8* %0) #0 {
   %2 = alloca i8*, align 8
-  %3 = alloca i32, align 4
-  %4 = alloca i32, align 4
-  %5 = alloca i32, align 4
   store i8* %0, i8** %2, align 8
-  %6 = load i32, i32* @y, align 4
-  store i32 %6, i32* %3, align 4
-  %7 = load i32, i32* @z, align 4
-  store i32 %7, i32* %4, align 4
-  %8 = load i32, i32* @x, align 4
-  store i32 %8, i32* %5, align 4
-  ret i8* null
+  br label %3
+
+3:                                                ; preds = %1, %7
+  store i32 1, i32* @flag2, align 4
+  store i32 3, i32* @flag2, align 4
+  %4 = load i32, i32* @flag1, align 4
+  %5 = icmp eq i32 %4, 1
+  br i1 %5, label %6, label %7
+
+6:                                                ; preds = %3
+  store i32 2, i32* @flag2, align 4
+  br label %7
+
+7:                                                ; preds = %6, %3
+  store i32 4, i32* @flag2, align 4
+  store i32 0, i32* @flag2, align 4
+  br label %3
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local i32 @main() #0 {
-  %1 = alloca i32, align 4
+  %1 = alloca i64, align 8
   %2 = alloca i64, align 8
-  %3 = alloca i64, align 8
-  store i32 0, i32* %1, align 4
-  %4 = call i32 @pthread_create(i64* %2, %union.pthread_attr_t* null, i8* (i8*)* @thread1, i8* null) #3
-  %5 = call i32 @pthread_create(i64* %3, %union.pthread_attr_t* null, i8* (i8*)* @thread2, i8* null) #3
-  %6 = load i64, i64* %2, align 8
-  %7 = call i32 @pthread_join(i64 %6, i8** null)
-  %8 = load i64, i64* %3, align 8
-  %9 = call i32 @pthread_join(i64 %8, i8** null)
+  %3 = call i32 @pthread_create(i64* %1, %union.pthread_attr_t* null, i8* (i8*)* @thr1, i8* null) #3
+  %4 = call i32 @pthread_create(i64* %2, %union.pthread_attr_t* null, i8* (i8*)* @thr2, i8* null) #3
+  %5 = load i64, i64* %1, align 8
+  %6 = call i32 @pthread_join(i64 %5, i8** null)
+  %7 = load i64, i64* %2, align 8
+  %8 = call i32 @pthread_join(i64 %7, i8** null)
   ret i32 0
 }
 

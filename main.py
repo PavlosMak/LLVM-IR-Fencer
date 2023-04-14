@@ -1,12 +1,12 @@
 import argparse
 import os
+import time
 import unittest
 
-from fence_insertion.insertion import FenceInserter
-from fence_insertion.analysis import ProgramAnalyser
-
-import tests.instruction_tests
 import tests.aeg_tests
+import tests.instruction_tests
+from fence_insertion.analysis import ProgramAnalyser
+from fence_insertion.insertion import FenceInserter
 
 # This is set in the main function, if you want to point it to a different location
 # set it manually here and remove the corresponding line from main.
@@ -26,15 +26,23 @@ def run():
     '''Runs the test programs through the fence insertion pass.
     Note that they need to be compiled first by running `compile-tests`.'''
     # dirs = ["test_programs", "test_programs/classic", "test_programs/fast"]
-    dirs = ["test_programs"]
+    dirs = ["test_programs", "test_programs/own"]
     parent_dir = os.getcwd()
     for directory in dirs:
         os.chdir(directory)
         for file in os.listdir():
-            if file.endswith(".ll"):
+            if file.endswith(".ll") and not file.startswith("fenced_"):
+                print(f"Inserting fences on {file}")
+                start = time.time()
                 analyser = ProgramAnalyser(file, WPA_PATH)
                 aeg = analyser.get_aeg()
-                inserter = FenceInserter(aeg)
+                inserter = FenceInserter(aeg, analyser.ir_lines)
+                inserter.insert_fences()
+                inserter.export("fenced_" + file)
+                end = time.time()
+                print("\t--Done!")
+                print(f"\t--Inserted: {inserter.fences_inserted} fences.")
+                print(f"\t--Time: {end-start:.2f} seconds.")
         os.chdir(parent_dir)
 
 
@@ -44,7 +52,7 @@ def run_on_single_file(filename: str):
     Note that it needs to be compiled first by running `compile-tests`.
     """
     parent_dir = os.getcwd()
-    os.chdir("test_programs")
+    os.chdir("test_programs/own")
     analyser = ProgramAnalyser(filename, WPA_PATH)
     inserter = FenceInserter(analyser.get_aeg(), analyser.ir_lines)
     inserter.insert_fences()
@@ -54,7 +62,7 @@ def run_on_single_file(filename: str):
 
 def compile_tests():
     '''Compiles the test programs, of the `testPrograms` directory.'''
-    dirs = ["test_programs"]
+    dirs = ["test_programs", "test_programs/own"]
     parent_dir = os.getcwd()
     for directory in dirs:
         os.chdir(directory)
@@ -82,10 +90,9 @@ if __name__ == '__main__':
         print("Compiling test programs...")
         compile_tests()
     elif parsed_args.run:
-        print("Inserting fences...")
         run()
     elif parsed_args.python_tests:
         print("running python tests")
         python_test()
     else:
-        run_on_single_file("test.ll")
+        run_on_single_file("peterson.ll")

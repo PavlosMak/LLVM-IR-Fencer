@@ -1,9 +1,9 @@
-import llvmlite.binding as llvm
-from fence_insertion.aeg import AbstractEventGraph
 from fence_insertion.aeg import AbstractEvent
+from fence_insertion.aeg import AbstractEventGraph
 from fence_insertion.instructions import *
-from fence_insertion.pointer_analysis import SVF
 from fence_insertion.pointer_analysis import MemAccessDirection
+from fence_insertion.pointer_analysis import SVF
+import re
 
 
 class ProgramIterator(object):
@@ -47,10 +47,8 @@ class ProgramIterator(object):
                 self.finger = i
                 succesful_jump = True
                 break
-        if not succesful_jump:
-            print("jump failed: " + str(line_number))
 
-    def getLineNumber(self):
+    def get_line_number(self):
         return self.finger
 
     def stack(self, line_number):
@@ -101,22 +99,16 @@ class ProgramAnalyser:
                     # we found a shared variable in the LLVM IR
                     self.shared_vars.append(parsed_line.code.split(" ")[0])
                 if "define" not in parsed_line.code and "declare" not in parsed_line.code and curr_func != "":
-                    self.line_numbers[curr_func].update({str(parsed_line).strip(): line_number})
+                    self.line_numbers[curr_func].update({self._process_string(str(parsed_line)).strip(): line_number})
         # Parse the code
         if not parse_as_bitcode:
             self.module = llvm.parse_assembly(self.ir_txt)
         else:
             self.module = llvm.parse_bitcode(self.ir_txt)
-        # Initialize the graph
-        print(self.shared_vars)
-        print(self.labels)
-        print(self.declared_funcs)
-        print(self.function_lines)
-
+        # # Initialize the graph
         self.aeg = AbstractEventGraph()
         # Parse instructions and associate with memory analysis results
         self.parsed_instructions = list()
-
         # This holds code iterators for all functions (useful for the thread analysis)
         self.iterators = dict()
         for func in self.module.functions:
@@ -125,18 +117,18 @@ class ProgramAnalyser:
             if func.name in self.declared_funcs:
                 continue
             local_accesses = self.mem_accesses[func.name]
-            definition_line = self.function_lines[func.name]
             line_num_offset = 0
             function_instructions = []
             for block in func.blocks:
                 for instr in block.instructions:
                     line_num_offset += 1
-                    txt_instr = str(instr).strip()
+                    txt_instr = self._process_string(str(instr))
                     mem_access = None
                     if txt_instr in local_accesses:
                         ix = local_accesses.index(txt_instr)
                         mem_access = local_accesses[ix]
-                    # instr_line_num = definition_line + line_num_offset
+                    if txt_instr not in self.line_numbers[func.name]:
+                        print(txt_instr)
                     instr_line_num = self.line_numbers[func.name][txt_instr]
                     parsed_instr = Instruction.create_instruction(instr, instr_line_num, mem_access)
                     if type(parsed_instr) == Assignment and hasattr(parsed_instr, "recursive") and type(
@@ -185,9 +177,7 @@ class ProgramAnalyser:
         # Base case
         if instr is None:
             return
-        print(instr)
-        print(instr.raw_string)
-        self.program_iterator.getLineNumber()
+        self.program_iterator.get_line_number()
         instr_type = type(instr)
         if instr_type == Assignment:
             str = instr.raw_string
@@ -209,7 +199,6 @@ class ProgramAnalyser:
                         exit()
                 else:
                     if "pthread_create" in str:
-                        print("thread_create")
                         thread_name = ""
                         # TODO: Extract in helper
                         # Get the function name from the thread and use that iterator to create the program
@@ -224,8 +213,6 @@ class ProgramAnalyser:
                 # no shared vars found, so move on to the next instruction
                 return self.construct_aeg_from_instruction(iterator, prev_evts)
         elif instr_type == FunctionCall:
-            print("found function")
-            # print(instr.raw_string)
             str = instr.raw_string
             if "@" in str:
                 func = str[str.find("@") + 1:].split()[0]
@@ -235,7 +222,6 @@ class ProgramAnalyser:
                     # function is defined within the file
                     # insert the location where we were onto a stack, so we can return to it after a ret instruction.
                     self.program_iterator.stack(instr.program_point + 1)
-                    # print(self.program_iterator.stacking)
                     # jump to the new function so we can search for shared vars there
                     self.program_iterator.jump(self.function_lines[func] + 1)
                     return self.construct_aeg_from_instruction(iterator, prev_evts)
@@ -264,31 +250,25 @@ class ProgramAnalyser:
                 self.construct_aeg_from_instruction(iterator, prev_evts)
                 iterator.jump(self.labels[label_else])
                 return self.construct_aeg_from_instruction(iterator, prev_evts)
-                # return self.construct_aeg_from_instruction(iterator, prev_evts)
             else:
                 # unconditional jmp
                 label = instr.raw_string[instr.raw_string.index("%") + 1:]
-                iterator.jump(self.labels[label])
+                iterator.jump(
+                self.labels[self._process_string(label)]
+                )
                 return self.construct_aeg_from_instruction(iterator, prev_evts)
         elif instr_type == AssumeAssertSkip:
             return self.construct_aeg_from_instruction(iterator, set())
         elif instr_type == AtomicSection:
             return self.construct_aeg_from_instruction(iterator, set())
         elif instr_type == NewThread:
-            print("found new thread")
-            return self.construct_aeg_from_instruction(iterator, set())
+            return self.construct_aeg_from_instruction(iterator, prev_evts)
         elif instr_type == EndThread:
-            print("found end thread")
             return self.construct_aeg_from_instruction(iterator, set())
         else:
-            # print(instr.raw_string)
-            # print("at line ")
-            # print(instr.program_point)
-
             if "ret" in instr.raw_string:
-                # print("found return function")
                 new_instr = self.program_iterator.unstack()
-                if new_instr == None:
+                if new_instr is None:
                     # should be at the end of main, so this is the end of the program
                     return
                 self.program_iterator.jump(new_instr)
@@ -301,3 +281,10 @@ class ProgramAnalyser:
         """
         self.construct_aeg()
         return self.aeg
+
+    def _process_string(self, string: str):
+        res = string.strip()
+        res = re.sub(r"\.\d+", "", res)
+        if ", !llvm.loop" in res:
+            res = res[0:res.index(", !llvm")]
+        return res

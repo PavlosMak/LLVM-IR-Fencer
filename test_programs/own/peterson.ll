@@ -1,74 +1,84 @@
-; ModuleID = 'loop_test.c'
-source_filename = "loop_test.c"
+; ModuleID = 'peterson.c'
+source_filename = "peterson.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
 %union.pthread_attr_t = type { i64, [48 x i8] }
 
-@x = dso_local global i32 0, align 4
-@y = dso_local global i32 0, align 4
-@z = dso_local global i32 0, align 4
+@flag1 = dso_local global i32 0, align 4
+@flag2 = dso_local global i32 0, align 4
+@turn = dso_local global i32 0, align 4
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i8* @thread1(i8* %0) #0 {
+define dso_local i8* @thr1(i8* %0) #0 {
   %2 = alloca i8*, align 8
-  %3 = alloca i32, align 4
-  %4 = alloca i32, align 4
   store i8* %0, i8** %2, align 8
-  store i32 3, i32* @x, align 4
-  store i32 0, i32* %4, align 4
-  br label %5
+  store i32 1, i32* @flag1, align 4
+  store i32 1, i32* @turn, align 4
+  br label %3
 
-5:                                                ; preds = %12, %1
-  %6 = load i32, i32* %4, align 4
-  %7 = icmp slt i32 %6, 10
-  br i1 %7, label %8, label %15
+3:                                                ; preds = %10, %1
+  br label %4
 
-8:                                                ; preds = %5
-  %9 = load i32, i32* @z, align 4
-  %10 = load i32, i32* %3, align 4
-  %11 = add nsw i32 %10, %9
-  store i32 %11, i32* %3, align 4
-  br label %12
+4:                                                ; preds = %3
+  %5 = load i32, i32* @flag2, align 4
+  %6 = icmp eq i32 %5, 1
+  br i1 %6, label %7, label %10
 
-12:                                               ; preds = %8
-  %13 = load i32, i32* %4, align 4
-  %14 = add nsw i32 %13, 1
-  store i32 %14, i32* %4, align 4
-  br label %5, !llvm.loop !2
+7:                                                ; preds = %4
+  %8 = load i32, i32* @turn, align 4
+  %9 = icmp eq i32 %8, 1
+  br label %10
 
-15:                                               ; preds = %5
+10:                                               ; preds = %7, %4
+  %11 = phi i1 [ false, %4 ], [ %9, %7 ]
+  br i1 %11, label %3, label %12, !llvm.loop !2
+
+12:                                               ; preds = %10
+  store i32 0, i32* @flag1, align 4
   ret i8* null
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i8* @thread2(i8* %0) #0 {
+define dso_local i8* @thr2(i8* %0) #0 {
   %2 = alloca i8*, align 8
-  %3 = alloca i32, align 4
-  %4 = alloca i32, align 4
-  %5 = alloca i32, align 4
   store i8* %0, i8** %2, align 8
-  %6 = load i32, i32* @y, align 4
-  store i32 %6, i32* %3, align 4
-  %7 = load i32, i32* @z, align 4
-  store i32 %7, i32* %4, align 4
-  %8 = load i32, i32* @x, align 4
-  store i32 %8, i32* %5, align 4
+  store i32 1, i32* @flag2, align 4
+  store i32 0, i32* @turn, align 4
+  br label %3
+
+3:                                                ; preds = %10, %1
+  br label %4
+
+4:                                                ; preds = %3
+  %5 = load i32, i32* @flag1, align 4
+  %6 = icmp eq i32 %5, 1
+  br i1 %6, label %7, label %10
+
+7:                                                ; preds = %4
+  %8 = load i32, i32* @turn, align 4
+  %9 = icmp eq i32 %8, 0
+  br label %10
+
+10:                                               ; preds = %7, %4
+  %11 = phi i1 [ false, %4 ], [ %9, %7 ]
+  br i1 %11, label %3, label %12, !llvm.loop !4
+
+12:                                               ; preds = %10
+  store i32 0, i32* @flag2, align 4
   ret i8* null
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local i32 @main() #0 {
-  %1 = alloca i32, align 4
+  %1 = alloca i64, align 8
   %2 = alloca i64, align 8
-  %3 = alloca i64, align 8
-  store i32 0, i32* %1, align 4
-  %4 = call i32 @pthread_create(i64* %2, %union.pthread_attr_t* null, i8* (i8*)* @thread1, i8* null) #3
-  %5 = call i32 @pthread_create(i64* %3, %union.pthread_attr_t* null, i8* (i8*)* @thread2, i8* null) #3
-  %6 = load i64, i64* %2, align 8
-  %7 = call i32 @pthread_join(i64 %6, i8** null)
-  %8 = load i64, i64* %3, align 8
-  %9 = call i32 @pthread_join(i64 %8, i8** null)
+  %3 = call i32 @pthread_create(i64* %1, %union.pthread_attr_t* null, i8* (i8*)* @thr1, i8* null) #3
+  %4 = call i32 @pthread_create(i64* %2, %union.pthread_attr_t* null, i8* (i8*)* @thr2, i8* null) #3
+  %5 = load i64, i64* %1, align 8
+  %6 = call i32 @pthread_join(i64 %5, i8** null)
+  %7 = load i64, i64* %2, align 8
+  %8 = call i32 @pthread_join(i64 %7, i8** null)
   ret i32 0
 }
 
@@ -89,3 +99,4 @@ attributes #3 = { nounwind }
 !1 = !{!"Ubuntu clang version 12.0.0-3ubuntu1~20.04.5"}
 !2 = distinct !{!2, !3}
 !3 = !{!"llvm.loop.mustprogress"}
+!4 = distinct !{!4, !3}

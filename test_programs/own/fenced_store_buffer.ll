@@ -17,7 +17,7 @@ define dso_local i8* @thread1(i8* %0) #0 {
   store i8* %0, i8** %2, align 8
   store i32 1, i32* @x, align 4
 
-  fence acq_rel
+  fence acq_rel ; Inserted by ILP IR Fencer 
   %5 = load i32, i32* @y, align 4
   store i32 %5, i32* %3, align 4
   %6 = load i32, i32* @z, align 4
@@ -32,7 +32,7 @@ define dso_local i8* @thread2(i8* %0) #0 {
   store i8* %0, i8** %2, align 8
   store i32 1, i32* @y, align 4
 
-  fence acq_rel
+  fence acq_rel ; Inserted by ILP IR Fencer 
   %4 = load i32, i32* @x, align 4
   store i32 %4, i32* %3, align 4
   ret i8* null

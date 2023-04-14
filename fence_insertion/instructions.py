@@ -34,6 +34,11 @@ class Line:
     def __hash__(self):
         return self.code.__hash__()
 
+    def __str__(self):
+        return self.code
+
+    def __repr__(self):
+        return self.code
 
 class Instruction:
     # TODO: Change program_point to be a Line instead of just a number

@@ -150,6 +150,9 @@ class ProgramAnalyser:
         self.threads = dict()
 
     def add_cmp_edges(self):
+        """
+        Adds the competing pairs' edges to the graph.
+        """
         events = list(self.aeg.edges.keys())
         writes = [e for e in events if e.abstract_event.direction == MemAccessDirection.WRITE]
         for write in writes:
@@ -158,10 +161,13 @@ class ProgramAnalyser:
                     self.aeg.add_cmp_edge(write, event)
 
     def construct_aeg(self):
+        """
+        Constructs the Abstract Event Graph, first by parsing the instructions
+        and then by adding the competing edge pairs.
+        """
         self.construct_aeg_from_instruction(self.program_iterator, set())
         self.add_cmp_edges()
-        # self.construct_aeg_from_instruction(self.program_iterator.next(), set())
-
+        
     def construct_aeg_from_instruction(self, iterator: ProgramIterator, prev_evts: set):
         """
         Incrementally creates the Abstract Event Graph, following the pseudocode

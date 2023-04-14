@@ -46,9 +46,9 @@ def run_on_single_file(filename: str):
     parent_dir = os.getcwd()
     os.chdir("test_programs")
     analyser = ProgramAnalyser(filename, WPA_PATH)
-    aeg = analyser.get_aeg()
-    # inserter = FenceInserter(aeg)
-    cycles = aeg.tarjan()
+    inserter = FenceInserter(analyser.get_aeg(), analyser.ir_lines)
+    inserter.insert_fences()
+    inserter.export("fenced_" + filename)
     os.chdir(parent_dir)
 
 

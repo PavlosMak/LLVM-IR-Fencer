@@ -41,7 +41,6 @@ class Line:
         return self.__str__()
 
 class Instruction:
-    # TODO: Change program_point to be a Line instead of just a number
     def __init__(self, program_point: int):
         """
         Creates a new instruction object

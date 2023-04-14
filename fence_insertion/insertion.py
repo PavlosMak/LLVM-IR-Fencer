@@ -60,7 +60,7 @@ class FenceInserter:
         lines = self.get_fences()  # The line numbers to insert full fences
         acc = 0
         for i in range(len(lines)):
-            self.program.insert(lines[i] + acc, "  fence acq_rel\n")
+            self.program.insert(lines[i] + acc, "\n  fence acq_rel\n")
             acc += 1
 
     def export(self, filename):

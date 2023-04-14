@@ -13,24 +13,26 @@ target triple = "x86_64-pc-linux-gnu"
 define dso_local i8* @thread1(i8* %0) #0 {
   %2 = alloca i8*, align 8
   %3 = alloca i32, align 4
+  %4 = alloca i32, align 4
+  %5 = alloca i32, align 4
   store i8* %0, i8** %2, align 8
   store i32 3, i32* @x, align 4
-  %4 = call i32 @rand() #3
-  %5 = srem i32 %4, 2
-  %6 = icmp ne i32 %5, 0
-  br i1 %6, label %7, label %8
+  %6 = call i32 @rand() #3
+  %7 = srem i32 %6, 2
+  %8 = icmp ne i32 %7, 0
+  br i1 %8, label %9, label %10
 
-7:                                                ; preds = %1
-  store i32 1, i32* @y, align 4
-  br label %10
+9:                                                ; preds = %1
+  store i32 3, i32* %4, align 4
+  br label %11
 
-8:                                                ; preds = %1
-  %9 = load i32, i32* @z, align 4
-  store i32 %9, i32* %3, align 4
-  br label %10
+10:                                               ; preds = %1
+  store i32 2, i32* @z, align 4
+  br label %11
 
-10:                                               ; preds = %8, %7
-  store i32 1, i32* @x, align 4
+11:                                               ; preds = %10, %9
+  %12 = load i32, i32* @x, align 4
+  store i32 %12, i32* %5, align 4
   ret i8* null
 }
 

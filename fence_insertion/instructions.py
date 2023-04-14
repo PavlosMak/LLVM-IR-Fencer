@@ -35,10 +35,10 @@ class Line:
         return self.code.__hash__()
 
     def __str__(self):
-        return self.code
+        return (self.code + "\n").replace("\n\n","\n")
 
     def __repr__(self):
-        return self.code
+        return self.__str__()
 
 class Instruction:
     # TODO: Change program_point to be a Line instead of just a number
@@ -164,6 +164,7 @@ class Jmp(Instruction):
         :param instr: The textual representation of the instruction.
         """
         super().__init__(program_point)
+        self.raw_string = instr
         instr.replace(",", "")
         instr = instr.strip()
         tokens = instr.split(" ")

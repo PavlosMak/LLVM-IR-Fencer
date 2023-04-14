@@ -1,5 +1,6 @@
 import argparse
 import os
+import time
 import unittest
 
 import tests.aeg_tests
@@ -32,13 +33,16 @@ def run():
         for file in os.listdir():
             if file.endswith(".ll") and not file.startswith("fenced_"):
                 print(f"Inserting fences on {file}")
+                start = time.time()
                 analyser = ProgramAnalyser(file, WPA_PATH)
                 aeg = analyser.get_aeg()
                 inserter = FenceInserter(aeg, analyser.ir_lines)
                 inserter.insert_fences()
                 inserter.export("fenced_" + file)
+                end = time.time()
                 print("\t--Done!")
-                print(f"\t--Inserted: {inserter.fences_inserted} fences")
+                print(f"\t--Inserted: {inserter.fences_inserted} fences.")
+                print(f"\t--Time: {end-start:.2f} seconds.")
         os.chdir(parent_dir)
 
 

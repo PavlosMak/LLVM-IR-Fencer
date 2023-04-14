@@ -1,5 +1,5 @@
-; ModuleID = 'test.c'
-source_filename = "test.c"
+; ModuleID = 'store_buffer.c'
+source_filename = "store_buffer.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
@@ -14,44 +14,27 @@ define dso_local i8* @thread1(i8* %0) #0 {
   %2 = alloca i8*, align 8
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
-  %5 = alloca i32, align 4
   store i8* %0, i8** %2, align 8
-  store i32 3, i32* @x, align 4
-  %6 = call i32 @rand() #3
-  %7 = srem i32 %6, 2
-  %8 = icmp ne i32 %7, 0
-  br i1 %8, label %9, label %10
+  store i32 1, i32* @x, align 4
 
-9:                                                ; preds = %1
-  store i32 3, i32* %4, align 4
-  br label %11
-
-10:                                               ; preds = %1
-  store i32 2, i32* @z, align 4
-  br label %11
-
-11:                                               ; preds = %10, %9
-  %12 = load i32, i32* @x, align 4
-  store i32 %12, i32* %5, align 4
+  fence acq_rel
+  %5 = load i32, i32* @y, align 4
+  store i32 %5, i32* %3, align 4
+  %6 = load i32, i32* @z, align 4
+  store i32 %6, i32* %4, align 4
   ret i8* null
 }
-
-; Function Attrs: nounwind
-declare dso_local i32 @rand() #1
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local i8* @thread2(i8* %0) #0 {
   %2 = alloca i8*, align 8
   %3 = alloca i32, align 4
-  %4 = alloca i32, align 4
-  %5 = alloca i32, align 4
   store i8* %0, i8** %2, align 8
-  %6 = load i32, i32* @y, align 4
-  store i32 %6, i32* %3, align 4
-  %7 = load i32, i32* @z, align 4
-  store i32 %7, i32* %4, align 4
-  %8 = load i32, i32* @x, align 4
-  store i32 %8, i32* %5, align 4
+  store i32 1, i32* @y, align 4
+
+  fence acq_rel
+  %4 = load i32, i32* @x, align 4
+  store i32 %4, i32* %3, align 4
   ret i8* null
 }
 

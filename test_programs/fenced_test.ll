@@ -22,15 +22,17 @@ define dso_local i8* @thread1(i8* %0) #0 {
   %8 = icmp ne i32 %7, 0
   br i1 %8, label %9, label %10
 
-9:                                                ; preds = %1
+9:                                                
   store i32 3, i32* %4, align 4
   br label %11
 
-10:                                               ; preds = %1
+10:                                               
   store i32 2, i32* @z, align 4
   br label %11
 
-11:                                               ; preds = %10, %9
+11:                                               
+
+  fence acq_rel
   %12 = load i32, i32* @x, align 4
   store i32 %12, i32* %5, align 4
   ret i8* null

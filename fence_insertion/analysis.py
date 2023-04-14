@@ -74,6 +74,8 @@ class ProgramAnalyser:
         self.labels = dict()
         self.function_lines = dict()
         self.declared_funcs = set()
+        self.line_numbers = dict()
+        curr_func = ""
         with open(path_to_file) as assembly_file:
             line_number = 0
             for line in assembly_file:
@@ -88,7 +90,9 @@ class ProgramAnalyser:
                     self.labels.update({parsed_line.code[0:parsed_line.code.index(":")]: parsed_line.line_number})
                 if "define" in parsed_line.code:
                     func_name = parsed_line.code[parsed_line.code.index("@") + 1:parsed_line.code.index("(")]
+                    curr_func = func_name
                     self.function_lines.update({func_name: line_number})
+                    self.line_numbers.update({func_name: dict()})
                 elif "declare" in parsed_line.code:
                     # We keep track of any function that is declared but not defined
                     func_name = parsed_line.code[parsed_line.code.index("@") + 1:parsed_line.code.index("(")]
@@ -96,6 +100,8 @@ class ProgramAnalyser:
                 elif parsed_line.code[0] == "@":
                     # we found a shared variable in the LLVM IR
                     self.shared_vars.append(parsed_line.code.split(" ")[0])
+                if "define" not in parsed_line.code and "declare" not in parsed_line.code and curr_func != "":
+                    self.line_numbers[curr_func].update({str(parsed_line).strip(): line_number})
         # Parse the code
         if not parse_as_bitcode:
             self.module = llvm.parse_assembly(self.ir_txt)
@@ -130,7 +136,8 @@ class ProgramAnalyser:
                     if txt_instr in local_accesses:
                         ix = local_accesses.index(txt_instr)
                         mem_access = local_accesses[ix]
-                    instr_line_num = definition_line + line_num_offset
+                    # instr_line_num = definition_line + line_num_offset
+                    instr_line_num = self.line_numbers[func.name][txt_instr]
                     parsed_instr = Instruction.create_instruction(instr, instr_line_num, mem_access)
                     if type(parsed_instr) == Assignment and hasattr(parsed_instr, "recursive") and type(
                             parsed_instr.recursive) == FunctionCall:
@@ -167,7 +174,7 @@ class ProgramAnalyser:
         """
         self.construct_aeg_from_instruction(self.program_iterator, set())
         self.add_cmp_edges()
-        
+
     def construct_aeg_from_instruction(self, iterator: ProgramIterator, prev_evts: set):
         """
         Incrementally creates the Abstract Event Graph, following the pseudocode
@@ -246,7 +253,23 @@ class ProgramAnalyser:
         elif instr_type == ConditionalBackwardJmp:
             return self.construct_aeg_from_instruction(iterator, set())
         elif instr_type == Jmp:
-            return self.construct_aeg_from_instruction(iterator, set())
+            label_count = instr.raw_string.count("label")
+            if label_count == 2:
+                # conditional jmp
+                split_instr = instr.raw_string.split(",")
+                label_if = split_instr[1][split_instr[1].index("%") + 1:]
+                label_else = split_instr[2][split_instr[2].index("%") + 1:]
+
+                iterator.jump(self.labels[label_if])
+                self.construct_aeg_from_instruction(iterator, prev_evts)
+                iterator.jump(self.labels[label_else])
+                return self.construct_aeg_from_instruction(iterator, prev_evts)
+                # return self.construct_aeg_from_instruction(iterator, prev_evts)
+            else:
+                # unconditional jmp
+                label = instr.raw_string[instr.raw_string.index("%") + 1:]
+                iterator.jump(self.labels[label])
+                return self.construct_aeg_from_instruction(iterator, prev_evts)
         elif instr_type == AssumeAssertSkip:
             return self.construct_aeg_from_instruction(iterator, set())
         elif instr_type == AtomicSection:

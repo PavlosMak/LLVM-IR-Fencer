@@ -9,12 +9,9 @@ int z = 0;  // shared variable
 void* thread1(void* arg) {
     int r1;
     x = 3;
-    if (rand() % 2) {
-        int temp2 = 3;
-    } else {
-        z = 2;
+    for(int i = 0; i < 10; i++) {
+        r1 += z;
     }
-    int temp = x;
     return NULL;
 }
 

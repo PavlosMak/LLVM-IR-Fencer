@@ -27,8 +27,12 @@ And then run the tool by doing:
 $ python main.py --run
 ```
 
+This command will place fences in all of the .ll files within the test_programs/ directory, and all of the test_programs/own directory. By editing main.py you could redirect this to a custom folder. 
 
-
+If you wish to verify your installation, you can run our Python test suite by running:
+```bash
+$ python main.py --python-tests
+```
 
 ## Requirements 
 - [or-tools](https://github.com/google/or-tools/blob/stable/ortools/linear_solver/samples/linear_programming_example.py)

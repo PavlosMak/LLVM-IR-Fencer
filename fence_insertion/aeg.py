@@ -66,10 +66,20 @@ class AbstractEventGraph:
         return node
 
     def add_node(self, node: AbstractEventGraphNode):
+        """
+        Add a node into the graph.
+        :param node: The node to add.
+        """
         self.vertexCount += 1
         self.edges.update({node: list()})
 
     def add_edge(self, from_node: AbstractEventGraphNode, to_node: AbstractEventGraphNode, is_po: bool = True):
+        """
+        Add an edge between two nodes into the graph.
+        :param from_node: The node at which the edge starts.
+        :param to_node: The node at which the edge ends.
+        :param is_po: boolean to confirm the edge is a program order edge.
+        """
         if from_node not in self.edges:
             self.add_node(from_node)
         self.edges[from_node].append(to_node)
@@ -100,6 +110,9 @@ class AbstractEventGraph:
                 self.add_edge(node1, node2)
 
     def tarjan_helper(self, u, low, disc, st):
+        """
+        Helper function for Tarjan's (1973) algorithm for cycle detection
+        """
         # Initialize discovery time and low value
         disc.update({u: self.time})
         low.update({u: self.time})

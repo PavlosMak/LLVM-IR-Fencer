@@ -30,6 +30,9 @@ class ProgramIterator(object):
         return len(self.instructions) - self.finger
 
     def next(self):
+        """
+        Returns the next instruction.
+        """
         if self.finger < len(self.instructions):
             cur = self.instructions[self.finger]
             self.finger += 1
@@ -41,6 +44,11 @@ class ProgramIterator(object):
 
     # Function to jump to a certain line number if required
     def jump(self, line_number: int):
+        """
+        Set the finger to a new position.
+        :param line_number: The line number which we should jump to.
+        :returns: Boolean to indicate if we succesfully jumped.
+        """
         succesful_jump = False
         for i in range(len(self.instructions)):
             if self.instructions[i].program_point == line_number:

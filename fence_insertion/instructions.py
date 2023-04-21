@@ -50,6 +50,13 @@ class Instruction:
         self.mem_access = None
 
     def create_instruction(instr: llvm.ValueRef, program_point: int, mem_access: MemoryAccess = None):
+        """
+        Create a new instruction class.
+        :param instr: value of the llvm at a line.
+        :param program_point: line number that is associated with that line.
+        :param mem_access: memory access type.
+        :returns: instruction type.
+        """
         str_instr = str(instr)
         result_instr = None
         if '=' in str_instr:
@@ -87,6 +94,7 @@ class Assignment(Instruction):
         """
         Creates a new assignment instruction
         :param instr: The textual representation of the instruction.
+        :param program_point: line number that is associated with instr.
         """
         super().__init__(program_point)
         self.raw_string = instr
@@ -116,6 +124,7 @@ class FunctionCall(Instruction):
         """
         Creates a new function call instruction
         :param instr: The textual representation of the instruction.
+        :param program_point: line number that is associated with instr.
         """
         super().__init__(program_point)
         self.raw_string = instr
@@ -131,6 +140,7 @@ class Guard(Instruction):
         """
         Creates a new guard instruction
         :param instr: The textual representation of the instruction.
+        :param program_point: line number that is associated with instr.
         """
         super().__init__(program_point)
         self.comparision_type = instr.split()[1]
@@ -141,6 +151,7 @@ class UnconditionalForwardJmp(Instruction):
         """
         Creates a new unconditional instruction
         :param instr: The textual representation of the instruction.
+        :param program_point: line number that is associated with instr.
         """
         super().__init__(program_point)
 
@@ -150,6 +161,7 @@ class ConditionalBackwardJmp(Instruction):
         """
         Creates a new unconditional instruction
         :param instr: The textual representation of the instruction.
+        :param program_point: line number that is associated with instr.
         """
         super().__init__(program_point)
 
@@ -161,6 +173,7 @@ class Jmp(Instruction):
         """
         Creates a new unconditional instruction
         :param instr: The textual representation of the instruction.
+        :param program_point: line number that is associated with instr.
         """
         super().__init__(program_point)
         self.raw_string = instr
@@ -198,6 +211,7 @@ class AssumeAssertSkip(Instruction):
         """
         Creates a new assert instruction
         :param instr: The textual representation of the instruction.
+        :param program_point: line number that is associated with instr.
         """
         super().__init__(program_point)
         self.comparision_type = instr.split()[1]
@@ -208,6 +222,7 @@ class AtomicSection(Instruction):
         """
         Creates a new atomic instruction
         :param instr: The textual representation of the instruction.
+        :param program_point: line number that is associated with instr.
         """
         super().__init__(program_point)
 
@@ -217,6 +232,7 @@ class NewThread(Instruction):
         """
         Creates a new guard instruction
         :param instr: The textual representation of the instruction.
+        :param program_point: line number that is associated with instr.
         """
         super().__init__(program_point)
 
@@ -226,6 +242,7 @@ class EndThread(Instruction):
         """
         Creates a new guard instruction
         :param instr: The textual representation of the instruction.
+        :param program_point: line number that is associated with instr.
         """
         super().__init__(program_point)
 
@@ -235,6 +252,7 @@ class OtherInstruction(Instruction):
         """
         Creates a new guard instruction
         :param instr: The textual representation of the instruction.
+        :param program_point: line number that is associated with instr.
         """
         super().__init__(program_point)
         self.raw_string = instr

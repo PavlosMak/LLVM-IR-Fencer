@@ -36,11 +36,11 @@ $ python main.py --python-tests
 
 ## Code structure
 Within the fence_insertion directory, there are different files that each have their own functionality:
-- aeg.py: Represent the abstract event graph, and can perform Tarjan's algorithm 
-- analysis.py: Handles the iterators that convert the parsed code into parts of the abstract event graph
-- insertion.py: Exports a new file where it has inserted the required fences
-- instructions.py: parses instructions to find determine what kind of instruction a line entails 
-- pointer_analysis: Finds shared memory locations within the program that are indirectly accessed through pointers
+- `aeg.py`: Represent the abstract event graph, and can perform Tarjan's algorithm 
+- `analysis.py`: Handles the iterators that convert the parsed code into parts of the abstract event graph
+- `insertion.py`: Exports a new file where it has inserted the required fences
+- `instructions.py`: parses instructions to find determine what kind of instruction a line entails 
+- `pointer_analysis`: Finds shared memory locations within the program that are indirectly accessed through pointers
 
 ## Requirements 
 - [or-tools](https://github.com/google/or-tools/blob/stable/ortools/linear_solver/samples/linear_programming_example.py)
